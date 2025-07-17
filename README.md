@@ -2,6 +2,10 @@
 
 `goto` command for navigating directories quickly.
 
+This repository contains two implementations:
+- **Python version** (`bin/` directory) - Full-featured with rich dependencies
+- **Go version** (`go/` directory) - Fast, single binary with no dependencies
+
 ## Install
 
 Please install `goto` command by following the steps below.
@@ -39,6 +43,25 @@ source ~/.zshrc
 # For bash
 source ~/.bashrc
 ```
+
+### Go Version (Alternative)
+
+For faster performance and no dependencies:
+
+```sh
+# Build the Go version
+cd go
+go build -o goto goto.go config.go
+
+# Copy to your PATH
+cp goto /usr/local/bin/goto-go
+```
+
+The Go version has identical functionality but offers:
+
+- ⚡ Faster startup time
+- 📦 Single binary with no dependencies  
+- 🔧 Cross-platform compilation support
 
 ## Configuration
 
