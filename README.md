@@ -3,7 +3,8 @@
 `goto` command for navigating directories quickly.
 
 This repository contains two implementations:
-- **Python version** (`bin/` directory) - Full-featured with rich dependencies
+
+- **Python version** (`py/` directory) - Full-featured with rich dependencies
 - **Go version** (`go/` directory) - Fast, single binary with no dependencies
 
 ## Install
@@ -15,23 +16,31 @@ Please install `goto` command by following the steps below.
 ```sh
 # Clone repository
 git clone https://github.com/kujirahand/goto.git
+
 # Install dependencies
-cd goto/bin
-pip3 install -r requirement.txt
+# --- python version ---
+cd goto/py
+pip3 install -r requirements.txt
+# --- go version ---
+cd goto
+make
 ```
 
 ### Add to PATH
 
-Add the `goto/bin` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
+Add the `goto/go` or `goto/py` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
 
 ```sh
-export PATH="$PATH:/path/to/goto/bin"
+# go version
+export PATH="$PATH:/path/to/goto/go"
+# python version
+export PATH="$PATH:/path/to/goto/py"
 ```
 
 For example, if you cloned to your home directory:
 
 ```sh
-export PATH="$PATH:$HOME/goto/bin"
+export PATH="$PATH:$HOME/goto/go"
 ```
 
 After adding to PATH, reload your shell configuration:

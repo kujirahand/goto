@@ -14,7 +14,7 @@ build-go:
 # Install Python dependencies
 install-python:
 	@echo "Installing Python dependencies..."
-	cd bin && pip3 install --break-system-packages -r requirements.txt
+	cd py && pip3 install --break-system-packages -r requirements.txt
 	@echo "✅ Python dependencies installed"
 
 # Install Go version to /usr/local/bin
@@ -32,7 +32,7 @@ clean:
 # Test both versions
 test: build-go
 	@echo "Testing Python version..."
-	cd bin && python3 goto.py --help
+	cd py && python3 goto.py --help
 	@echo "\nTesting Go version..."
 	cd go && ./goto --help
 	@echo "✅ Both versions working"
@@ -42,7 +42,7 @@ help:
 	@echo "Available targets:"
 	@echo "  all          - Build Go version (default)"
 	@echo "  build-go     - Build Go version"
-	@echo "  install-python - Install Python dependencies"
+	@echo "  install-python - Install Python dependencies (py/ directory)"
 	@echo "  install-go   - Install Go version to /usr/local/bin"
 	@echo "  clean        - Clean build artifacts"
 	@echo "  test         - Test both versions"
