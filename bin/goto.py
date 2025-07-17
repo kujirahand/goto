@@ -29,13 +29,18 @@ def get_user_choice(entries, shortcut_map):
         path = os.path.expanduser(values.get("path", ""))
         print(f"{i}. {label} → {path} (shortcut: {shortcut})")
 
-    print("\nPlease enter the number or shortcut key of the destination you want to go to:")
+    print("\n➕ [+] Add current directory")
+    print("\nPlease enter the number, shortcut key, or [+] to add current directory:")
     
     try:
-        choice = input("Enter number or shortcut key: ").strip()
+        choice = input("Enter number, shortcut key, or [+]: ").strip()
     except (EOFError, KeyboardInterrupt):
         print("\nOperation cancelled.")
         return None, None, None
+
+    # Check if user wants to add current directory
+    if choice == "+":
+        return "ADD_CURRENT", None, None
 
     # Determine input and get corresponding entry
     index = None
@@ -115,6 +120,64 @@ exec "{user_shell}"
         return False
 
 
+def add_current_path_to_config(toml_file):
+    """Add current directory to the TOML configuration file"""
+    current_dir = os.getcwd()
+    
+    # Get label name from user
+    print(f"📍 Current directory: {current_dir}")
+    try:
+        label = input("Enter a label for this directory: ").strip()
+        if not label:
+            print("❌ Label cannot be empty.")
+            return False
+            
+        shortcut = input("Enter a shortcut key (optional, press Enter to skip): ").strip()
+        
+        # Generate TOML entry
+        toml_entry = f"\n[{label}]\n"
+        toml_entry += f'path = "{current_dir}"\n'
+        if shortcut:
+            toml_entry += f'shortcut = "{shortcut}"\n'
+        
+        # Append to TOML file
+        with open(toml_file, "a", encoding="utf-8") as f:
+            f.write(toml_entry)
+        
+        print(f"✅ Added '{label}' → {current_dir}")
+        if shortcut:
+            print(f"🔑 Shortcut: {shortcut}")
+        
+        return True
+        
+    except (EOFError, KeyboardInterrupt):
+        print("\n❌ Operation cancelled.")
+        return False
+    except (OSError, IOError) as e:
+        print(f"❌ Error adding path: {e}")
+        return False
+
+
+def find_destination_by_arg(arg, entries, shortcut_map):
+    """Find destination by command line argument (label or shortcut)"""
+    # Check if it's a shortcut
+    if arg in shortcut_map:
+        index = shortcut_map[arg]
+        label, values = entries[index - 1]
+        path = os.path.expanduser(values["path"])
+        command = values.get("command")
+        return path, command, label
+    
+    # Check if it's a label (case-insensitive)
+    for label, values in entries:
+        if label.lower() == arg.lower():
+            path = os.path.expanduser(values["path"])
+            command = values.get("command")
+            return path, command, label
+    
+    return None, None, None
+
+
 def main():
     """Main function to handle directory navigation with new shell"""
     # Load TOML file
@@ -144,8 +207,49 @@ def main():
         if shortcut:
             shortcut_map[shortcut] = i
 
+    # Check for command line argument
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        
+        # Handle help option
+        if arg in ['-h', '--help', 'help']:
+            print("🚀 goto - Navigate directories quickly")
+            print("\nUsage:")
+            print("  goto                 Show interactive menu")
+            print("  goto <label>         Go to destination by label name")
+            print("  goto <shortcut>      Go to destination by shortcut key")
+            print("  goto -h, --help      Show this help message")
+            print("\nExamples:")
+            print("  goto Home           # Navigate to 'Home' destination")
+            print("  goto h              # Navigate using shortcut 'h'")
+            print("  goto                # Show interactive menu")
+            sys.exit(0)
+        
+        # Find destination by argument
+        target_dir, command, label = find_destination_by_arg(arg, entries, shortcut_map)
+        
+        if target_dir is None:
+            print(f"❌ Destination '{arg}' not found.")
+            print("\n📋 Available destinations:")
+            for i, (label, values) in enumerate(entries, start=1):
+                shortcut = values.get("shortcut", "")
+                path = os.path.expanduser(values.get("path", ""))
+                shortcut_str = f" (shortcut: {shortcut})" if shortcut else ""
+                print(f"  • {label}{shortcut_str} → {path}")
+            sys.exit(1)
+        
+        print(f"🎯 Found destination: {label}")
+        # Open new shell in the found directory
+        success = open_new_shell(target_dir, command, label)
+        sys.exit(0 if success else 1)
+
     # Get user choice
     target_dir, command, label = get_user_choice(entries, shortcut_map)
+    
+    # Handle adding current directory
+    if target_dir == "ADD_CURRENT":
+        success = add_current_path_to_config(toml_file)
+        sys.exit(0 if success else 1)
     
     if target_dir is None:
         print("ℹ️  No directory selected or operation cancelled.")

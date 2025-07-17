@@ -11,26 +11,26 @@ Please install `goto` command by following the steps below.
 ```sh
 # Clone repository
 git clone https://github.com/kujirahand/goto.git
-# Install package
+# Install dependencies
 cd goto/bin
 pip3 install -r requirement.txt
 ```
 
-### Install as Shell Function
+### Add to PATH
 
-The recommended way to install `goto` is as a shell function, which allows proper directory navigation:
+Add the `goto/bin` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
 
 ```sh
-# Run the install script
-./install.sh
+export PATH="$PATH:/path/to/goto/bin"
 ```
 
-This will:
-1. Copy the necessary Python files to `~/.local/bin`
-2. Add the `goto` function to your shell configuration file (`.zshrc` or `.bashrc`)
-3. Make the function available in your current shell
+For example, if you cloned to your home directory:
 
-After installation, reload your shell configuration:
+```sh
+export PATH="$PATH:$HOME/goto/bin"
+```
+
+After adding to PATH, reload your shell configuration:
 
 ```sh
 # For zsh
@@ -40,17 +40,155 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
-### Alternative: Add to PATH (deprecated)
-
-You can also add the `goto` command to your PATH, but this method has limitations with directory changing:
-
-```sh
-export PATH="$PATH:/path/to/goto/bin"
-```
+## Configuration
 
 ### Config file - `~/.goto.toml`
 
-You can create a configuration file at `~/.goto.toml` to customize the behavior of the `goto` command. Here is an example configuration:
+The `goto` command uses a TOML configuration file located at `~/.goto.toml`. When you first run `goto`, it will automatically create a default configuration file with sample destinations.
+
+Example configuration:
+
+```toml
+[Home]
+path = "~/"
+shortcut = "h"
+
+[Desktop]
+path = "~/Desktop"
+shortcut = "d"
+
+[Downloads]
+path = "~/Downloads"
+shortcut = "b"
+
+[MyProject]
+path = "~/workspace/my-project"
+shortcut = "p"
+command = "ls -la && git status"
+```
+
+Each destination can have:
+
+- `path` (required): Directory path (supports `~` for home directory)
+- `shortcut` (optional): Single character shortcut key
+- `command` (optional): Command to execute after changing directory
+
+## Usage
+
+### Basic Usage
+
+Run the `goto` command to see available destinations:
+
+```sh
+goto
+```
+
+### Command Line Arguments
+
+You can also specify a destination directly as a command line argument:
+
+```sh
+# Using label name
+goto Home
+goto MyProject
+
+# Using shortcut key
+goto h
+goto p
+```
+
+This is useful for scripting or when you know exactly where you want to go.
+
+### Interactive Mode
+
+When run without arguments, `goto` displays an interactive menu:
+
+Example output:
+
+```text
+👉 Available destinations:
+1. Home → /Users/username/ (shortcut: h)
+2. Desktop → /Users/username/Desktop (shortcut: d)
+3. Downloads → /Users/username/Downloads (shortcut: b)
+4. MyProject → /Users/username/workspace/my-project (shortcut: p)
+
+➕ [+] Add current directory
+
+Please enter the number, shortcut key, or [+] to add current directory:
+Enter number, shortcut key, or [+]:
+```
+
+You can navigate by:
+
+- **Number**: Enter `1`, `2`, `3`, etc.
+- **Shortcut**: Enter `h`, `d`, `b`, etc.
+- **Add current**: Enter `+` to add current directory
+
+### Adding Current Directory
+
+You can add the current directory to your goto destinations by selecting `[+]`:
+
+```sh
+goto
+# Select [+] from the menu
+# Enter a label for the current directory
+# Optionally enter a shortcut key
+```
+
+Example:
+
+```text
+Enter number, shortcut key, or [+]: +
+📍 Current directory: /Users/username/workspace/new-project
+Enter a label for this directory: NewProject
+Enter a shortcut key (optional, press Enter to skip): n
+✅ Added 'NewProject' → /Users/username/workspace/new-project
+🔑 Shortcut: n
+```
+
+This feature allows you to quickly add frequently used directories to your goto list.
+
+### New Shell Functionality
+
+When you select a destination, `goto` opens a new shell session in the target directory. This means:
+
+- Your current shell session remains unchanged
+- You get a fresh shell environment in the new location
+- Type `exit` to return to your previous shell
+- If a `command` is specified in the configuration, it will be executed automatically
+
+### Examples
+
+1. **Navigate using command line argument (label):**
+
+   ```sh
+   goto Home
+   goto MyProject
+   ```
+
+2. **Navigate using command line argument (shortcut):**
+
+   ```sh
+   goto h
+   goto p
+   ```
+
+3. **Interactive navigation:**
+
+   ```sh
+   goto
+   # Then enter: h (shortcut) or 1 (number)
+   ```
+
+4. **Add current directory:**
+
+   ```sh
+   cd /path/to/important/project
+   goto
+   # Enter: +
+   # Label: ImportantProject
+   # Shortcut: i
+   ```
 
 
 
