@@ -1,0 +1,8 @@
+#!/bin/bash
+# goto command wrapper - executes goto.py
+
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Execute the Python script with all arguments passed through
+exec python3 "$SCRIPT_DIR/goto.py" "$@"
