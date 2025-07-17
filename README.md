@@ -88,6 +88,10 @@ goto
 You can also specify a destination directly as a command line argument:
 
 ```sh
+# Using number
+goto 1
+goto 4
+
 # Using label name
 goto Home
 goto MyProject
@@ -159,28 +163,35 @@ When you select a destination, `goto` opens a new shell session in the target di
 
 ### Examples
 
-1. **Navigate using command line argument (label):**
+1. **Navigate using command line argument (number):**
+
+   ```sh
+   goto 1
+   goto 4
+   ```
+
+2. **Navigate using command line argument (label):**
 
    ```sh
    goto Home
    goto MyProject
    ```
 
-2. **Navigate using command line argument (shortcut):**
+3. **Navigate using command line argument (shortcut):**
 
    ```sh
    goto h
    goto p
    ```
 
-3. **Interactive navigation:**
+4. **Interactive navigation:**
 
    ```sh
    goto
-   # Then enter: h (shortcut) or 1 (number)
+   # Then enter: h (shortcut), 1 (number), or Home (label)
    ```
 
-4. **Add current directory:**
+5. **Add current directory:**
 
    ```sh
    cd /path/to/important/project

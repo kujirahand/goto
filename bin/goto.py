@@ -30,10 +30,10 @@ def get_user_choice(entries, shortcut_map):
         print(f"{i}. {label} → {path} (shortcut: {shortcut})")
 
     print("\n➕ [+] Add current directory")
-    print("\nPlease enter the number, shortcut key, or [+] to add current directory:")
+    print("\nPlease enter the number, shortcut key, label name, or [+] to add current directory:")
     
     try:
-        choice = input("Enter number, shortcut key, or [+]: ").strip()
+        choice = input("Enter number, shortcut key, label name, or [+]: ").strip()
     except (EOFError, KeyboardInterrupt):
         print("\nOperation cancelled.")
         return None, None, None
@@ -48,6 +48,12 @@ def get_user_choice(entries, shortcut_map):
         index = int(choice)
     elif choice in shortcut_map:
         index = shortcut_map[choice]
+    else:
+        # Check if it's a label name (case-insensitive)
+        for i, (label, values) in enumerate(entries, start=1):
+            if label.lower() == choice.lower():
+                index = i
+                break
 
     if index and 1 <= index <= len(entries):
         label, values = entries[index - 1]
@@ -159,7 +165,18 @@ def add_current_path_to_config(toml_file):
 
 
 def find_destination_by_arg(arg, entries, shortcut_map):
-    """Find destination by command line argument (label or shortcut)"""
+    """Find destination by command line argument (number, label or shortcut)"""
+    # Check if it's a number
+    if arg.isdigit():
+        index = int(arg)
+        if 1 <= index <= len(entries):
+            label, values = entries[index - 1]
+            path = os.path.expanduser(values["path"])
+            command = values.get("command")
+            return path, command, label
+        else:
+            return None, None, None
+    
     # Check if it's a shortcut
     if arg in shortcut_map:
         index = shortcut_map[arg]
@@ -216,10 +233,12 @@ def main():
             print("🚀 goto - Navigate directories quickly")
             print("\nUsage:")
             print("  goto                 Show interactive menu")
+            print("  goto <number>        Go to destination by number (e.g., goto 1)")
             print("  goto <label>         Go to destination by label name")
             print("  goto <shortcut>      Go to destination by shortcut key")
             print("  goto -h, --help      Show this help message")
             print("\nExamples:")
+            print("  goto 1              # Navigate to 1st destination")
             print("  goto Home           # Navigate to 'Home' destination")
             print("  goto h              # Navigate using shortcut 'h'")
             print("  goto                # Show interactive menu")
