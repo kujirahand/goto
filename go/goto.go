@@ -65,6 +65,18 @@ func main() {
 			os.Exit(0)
 		}
 		
+		// Handle version option
+		if arg == "-v" || arg == "--version" || arg == "version" {
+			showVersion()
+			os.Exit(0)
+		}
+		
+		// Handle completion option for bash/zsh tab completion
+		if arg == "--complete" {
+			showCompletions(entries)
+			os.Exit(0)
+		}
+		
 		// Find destination by argument
 		targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
 		
@@ -74,7 +86,7 @@ func main() {
 			for _, entry := range entries {
 				shortcutStr := ""
 				if entry.Shortcut != "" {
-					shortcutStr = fmt.Sprintf(" (shortcut: %s)", entry.Shortcut)
+					shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
 				}
 				expandedPath := expandPath(entry.Path)
 				fmt.Printf("  • %s%s → %s\n", entry.Label, shortcutStr, expandedPath)
@@ -177,7 +189,11 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 	fmt.Println("👉 Available destinations:")
 	for i, entry := range entries {
 		expandedPath := expandPath(entry.Path)
-		fmt.Printf("%d. %s → %s (shortcut: %s)\n", i+1, entry.Label, expandedPath, entry.Shortcut)
+		shortcutStr := ""
+		if entry.Shortcut != "" {
+			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+		}
+		fmt.Printf("%d. %s → %s%s\n", i+1, entry.Label, expandedPath, shortcutStr)
 	}
 	
 	fmt.Println("\n➕ [+] Add current directory")
@@ -417,6 +433,10 @@ func findDestinationByArg(arg string, entries []Entry, shortcutMap map[string]in
 	return "", "", ""
 }
 
+func showVersion() {
+	fmt.Printf("%s version %s\n", AppName, Version)
+}
+
 func showHelp() {
 	// Get configuration file path for display
 	usr, err := user.Current()
@@ -433,9 +453,18 @@ func showHelp() {
 	fmt.Println("  goto <label>         Go to destination by label name")
 	fmt.Println("  goto <shortcut>      Go to destination by shortcut key")
 	fmt.Println("  goto -h, --help      Show this help message")
+	fmt.Println("  goto -v, --version   Show version information")
+	fmt.Println("  goto --complete      Show completion candidates (for shell completion)")
 	fmt.Println("\nExamples:")
 	fmt.Println("  goto 1              # Navigate to 1st destination")
 	fmt.Println("  goto Home           # Navigate to 'Home' destination")
 	fmt.Println("  goto h              # Navigate using shortcut 'h'")
 	fmt.Println("  goto                # Show interactive menu")
+}
+
+func showCompletions(entries []Entry) {
+	// Output only labels for completion
+	for _, entry := range entries {
+		fmt.Println(entry.Label)
+	}
 }

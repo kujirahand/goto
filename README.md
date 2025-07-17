@@ -42,6 +42,64 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
+### Install with Tab Completion (Recommended)
+
+For the best experience with tab completion, install both the binary and completion scripts:
+
+```sh
+# Build and install everything
+make install-all
+```
+
+This will:
+
+1. Install the `goto` binary to `/usr/local/bin/`
+2. Install shell completion scripts
+3. Show instructions for enabling completion
+
+#### Manual Completion Setup
+
+If you prefer to install completion manually:
+
+1. Install completion scripts:
+
+   ```sh
+   make install-completion
+   ```
+
+2. Add the following to your shell configuration:
+
+   **For bash** (`~/.bashrc` or `~/.bash_profile`):
+
+   ```sh
+   source ~/.bash_completion.d/goto-completion.bash
+   ```
+
+   **For zsh** (`~/.zshrc`):
+
+   ```sh
+   fpath=(~/.zsh/completions $fpath)
+   autoload -U compinit && compinit
+   ```
+
+3. Restart your shell or reload configuration:
+
+   ```sh
+   source ~/.bashrc   # for bash
+   source ~/.zshrc    # for zsh
+   ```
+
+#### Using Tab Completion
+
+Once enabled, you can use tab completion with the `goto` command:
+
+```sh
+goto <TAB>        # Shows all available destinations
+goto h<TAB>       # Completes shortcuts starting with 'h'
+goto Home<TAB>    # Completes labels starting with 'Home'
+goto 1<TAB>       # Shows destinations with numbers starting with '1'
+```
+
 ## Configuration
 
 ### Config file - `~/.goto.toml`

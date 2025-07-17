@@ -1,0 +1,23 @@
+#compdef goto
+
+# Zsh completion script for goto command
+
+_goto() {
+    local context state line
+    local -a candidates
+
+    # Get completion candidates from goto command
+    if (( $+commands[goto] )); then
+        candidates=(${(f)"$(goto --complete 2>/dev/null)"})
+    fi
+
+    # Add basic options
+    candidates+=(-h --help help)
+
+    _arguments \
+        '(-h --help)'{-h,--help}'[show help message]' \
+        '--complete[show completion candidates]' \
+        "1:destination:(${candidates})"
+}
+
+_goto "$@"
