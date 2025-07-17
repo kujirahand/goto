@@ -4,11 +4,57 @@
 
 This is a Go implementation providing fast, dependency-free directory navigation.
 
+## Quick Start
+
+1. **Download** the latest binary for your platform from [Releases](https://github.com/kujirahand/goto/releases)
+2. **Make it executable** and place in your PATH
+3. **Run** `goto` to see the interactive menu
+
 ## Install
 
 Please install `goto` command by following the steps below.
 
-### Clone and Install
+### Download Pre-built Binary (Recommended)
+
+The easiest way to install `goto` is to download a pre-built binary from the GitHub releases page:
+
+1. **Visit the releases page**: <https://github.com/kujirahand/goto/releases>
+2. **Download the binary for your platform**:
+   - **Linux amd64**: `goto-linux-amd64`
+   - **Linux arm64**: `goto-linux-arm64`
+   - **macOS Intel**: `goto-darwin-amd64`
+   - **macOS Apple Silicon**: `goto-darwin-arm64`
+   - **Windows amd64**: `goto-windows-amd64.exe`
+   - **Windows arm64**: `goto-windows-arm64.exe`
+
+3. **Make it executable and place in your PATH**:
+
+   **For Linux/macOS**:
+
+   ```sh
+   # Download and make executable
+   chmod +x goto-*
+   
+   # Move to a directory in your PATH
+   sudo mv goto-* /usr/local/bin/goto
+   
+   # Or create a local bin directory (if it doesn't exist)
+   mkdir -p ~/bin
+   mv goto-* ~/bin/goto
+   export PATH="$PATH:$HOME/bin"  # Add this to your shell config
+   ```
+
+   **For Windows**:
+   - Rename the downloaded file to `goto.exe`
+   - Place it in a directory that's in your PATH, or create a new directory and add it to PATH
+
+4. **Verify installation**:
+
+   ```sh
+   goto --version
+   ```
+
+### Clone and Build from Source
 
 ```sh
 # Clone repository
@@ -42,9 +88,59 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
-### Install with Tab Completion (Recommended)
+### Install with Tab Completion (Source Build)
 
-For the best experience with tab completion, install both the binary and completion scripts:
+If you built from source, you can install both the binary and completion scripts:
+
+```sh
+# Build and install everything (requires source code)
+make install-all
+```
+
+### Manual Tab Completion Setup (For Pre-built Binaries)
+
+If you downloaded a pre-built binary, you can still set up tab completion manually:
+
+1. **Download completion scripts**:
+
+   ```sh
+   # Create completion directories
+   mkdir -p ~/.bash_completion.d ~/.zsh/completions
+   
+   # Download bash completion script
+   curl -o ~/.bash_completion.d/goto-completion.bash \
+     https://raw.githubusercontent.com/kujirahand/goto/main/completion/goto-completion.bash
+   
+   # Download zsh completion script  
+   curl -o ~/.zsh/completions/_goto \
+     https://raw.githubusercontent.com/kujirahand/goto/main/completion/_goto
+   ```
+
+2. **Add to your shell configuration**:
+
+   **For bash** (`~/.bashrc` or `~/.bash_profile`):
+
+   ```sh
+   source ~/.bash_completion.d/goto-completion.bash
+   ```
+
+   **For zsh** (`~/.zshrc`):
+
+   ```sh
+   fpath=(~/.zsh/completions $fpath)
+   autoload -U compinit && compinit
+   ```
+
+3. **Restart your shell or reload configuration**:
+
+   ```sh
+   source ~/.bashrc   # for bash
+   source ~/.zshrc    # for zsh
+   ```
+
+### Advanced Installation with Tab Completion (Source Build)
+
+For the best experience when building from source, install both the binary and completion scripts:
 
 ```sh
 # Build and install everything
@@ -57,9 +153,9 @@ This will:
 2. Install shell completion scripts
 3. Show instructions for enabling completion
 
-#### Manual Completion Setup
+#### Alternative: Manual Completion Setup (Source Build)
 
-If you prefer to install completion manually:
+If you built from source but prefer to install completion manually:
 
 1. Install completion scripts:
 
