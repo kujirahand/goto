@@ -1,6 +1,6 @@
 # Makefile for goto command
 
-.PHONY: all build-go build-python install-python install-go clean test help
+.PHONY: all build-go install-go clean test help
 
 # Default target
 all: build-go
@@ -11,17 +11,11 @@ build-go:
 	cd go && go build -o goto goto.go config.go
 	@echo "✅ Go version built successfully: go/goto"
 
-# Install Python dependencies
-install-python:
-	@echo "Installing Python dependencies..."
-	cd py && pip3 install --break-system-packages -r requirements.txt
-	@echo "✅ Python dependencies installed"
-
 # Install Go version to /usr/local/bin
 install-go: build-go
-	@echo "Installing Go version to /usr/local/bin/goto-go..."
-	sudo cp go/goto /usr/local/bin/goto-go
-	@echo "✅ Go version installed as 'goto-go'"
+	@echo "Installing Go version to /usr/local/bin/goto..."
+	sudo cp go/goto /usr/local/bin/goto
+	@echo "✅ Go version installed as 'goto'"
 
 # Clean build artifacts
 clean:
@@ -29,21 +23,18 @@ clean:
 	rm -f go/goto
 	@echo "✅ Clean completed"
 
-# Test both versions
+# Test Go version
 test: build-go
-	@echo "Testing Python version..."
-	cd py && python3 goto.py --help
-	@echo "\nTesting Go version..."
+	@echo "Testing Go version..."
 	cd go && ./goto --help
-	@echo "✅ Both versions working"
+	@echo "✅ Go version working"
 
 # Show help
 help:
 	@echo "Available targets:"
 	@echo "  all          - Build Go version (default)"
 	@echo "  build-go     - Build Go version"
-	@echo "  install-python - Install Python dependencies (py/ directory)"
 	@echo "  install-go   - Install Go version to /usr/local/bin"
 	@echo "  clean        - Clean build artifacts"
-	@echo "  test         - Test both versions"
+	@echo "  test         - Test Go version"
 	@echo "  help         - Show this help"

@@ -418,7 +418,15 @@ func findDestinationByArg(arg string, entries []Entry, shortcutMap map[string]in
 }
 
 func showHelp() {
+	// Get configuration file path for display
+	usr, err := user.Current()
+	configPath := "~/.goto.toml"
+	if err == nil {
+		configPath = filepath.Join(usr.HomeDir, ".goto.toml")
+	}
+	
 	fmt.Println("🚀 goto - Navigate directories quickly")
+	fmt.Printf("\nConfiguration file: %s\n", configPath)
 	fmt.Println("\nUsage:")
 	fmt.Println("  goto                 Show interactive menu")
 	fmt.Println("  goto <number>        Go to destination by number (e.g., goto 1)")

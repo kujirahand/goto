@@ -2,10 +2,7 @@
 
 `goto` command for navigating directories quickly.
 
-This repository contains two implementations:
-
-- **Python version** (`py/` directory) - Full-featured with rich dependencies
-- **Go version** (`go/` directory) - Fast, single binary with no dependencies
+This is a Go implementation providing fast, dependency-free directory navigation.
 
 ## Install
 
@@ -16,25 +13,17 @@ Please install `goto` command by following the steps below.
 ```sh
 # Clone repository
 git clone https://github.com/kujirahand/goto.git
-
-# Install dependencies
-# --- python version ---
-cd goto/py
-pip3 install -r requirements.txt
-# --- go version ---
+# Build
 cd goto
 make
 ```
 
 ### Add to PATH
 
-Add the `goto/go` or `goto/py` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
+Add the `goto/go` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
 
 ```sh
-# go version
 export PATH="$PATH:/path/to/goto/go"
-# python version
-export PATH="$PATH:/path/to/goto/py"
 ```
 
 For example, if you cloned to your home directory:
@@ -52,25 +41,6 @@ source ~/.zshrc
 # For bash
 source ~/.bashrc
 ```
-
-### Go Version (Alternative)
-
-For faster performance and no dependencies:
-
-```sh
-# Build the Go version
-cd go
-go build -o goto goto.go config.go
-
-# Copy to your PATH
-cp goto /usr/local/bin/goto-go
-```
-
-The Go version has identical functionality but offers:
-
-- ⚡ Faster startup time
-- 📦 Single binary with no dependencies  
-- 🔧 Cross-platform compilation support
 
 ## Configuration
 

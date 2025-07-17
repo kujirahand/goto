@@ -1,11 +1,11 @@
-# Go Version of goto
+# goto - Go Implementation
 
-This directory contains the Go implementation of the `goto` command with identical functionality to the Python version.
+Fast directory navigation command written in Go.
 
 ## Features
 
-- 🚀 Interactive directory navigation menu
-- 📝 TOML configuration file support
+- 🚀 **Ultra-fast startup**: Compiled binary with instant execution
+- � **Zero dependencies**: Single binary that runs anywhere
 - 🔢 Navigate by number (e.g., `goto 1`)
 - 🏷️  Navigate by label name (e.g., `goto Home`)  
 - ⌨️  Navigate by shortcut key (e.g., `goto h`)
