@@ -4,7 +4,7 @@
 
 This is a Go implementation providing fast, dependency-free directory navigation.
 
-- [日本語](README-ja.md) / [中文](README-zh.md) / [한국어](README-ko.md)
+- [日本語](README-ja.md) / [中文](README-zh.md) / [한국어](README-ko.md) / [Español](README-es.md)
 
 ## Quick Start
 
@@ -405,6 +405,7 @@ This intelligent ordering ensures that your most frequently used directories are
 - **Japanese** (ja) - 日本語
 - **Chinese** (zh) - 中文
 - **Korean** (ko) - 한국어
+- **Spanish** (es) - Español
 
 ### How Language Detection Works
 
@@ -455,6 +456,15 @@ For example, if your system is set to Japanese (`LANG=ja_JP.UTF-8`), `goto` will
 📈 최근 사용 기록:
 ```
 
+**Spanish:**
+
+```text
+🚀 goto - Navegar directorios rápidamente
+👉 Destinos disponibles:
+1. Home → /Users/username/ (shortcut: h)
+📈 Historial de uso reciente:
+```
+
 ### Language Override
 
 If you want to use a specific language regardless of your system settings, you can set the `LANG` environment variable:
@@ -471,6 +481,9 @@ LANG=zh_CN.UTF-8 goto
 
 # Use Korean interface
 LANG=ko_KR.UTF-8 goto
+
+# Use Spanish interface
+LANG=es_ES.UTF-8 goto
 ```
 
 ### Supported Languages

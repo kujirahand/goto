@@ -13,6 +13,7 @@ const (
 	Japanese Language = "ja"
 	Chinese  Language = "zh"
 	Korean   Language = "ko"
+	Spanish  Language = "es"
 )
 
 // Messages contains all user-facing messages
@@ -107,6 +108,8 @@ func detectLanguage() Language {
 				return Chinese
 			case "ko":
 				return Korean
+			case "es":
+				return Spanish
 			default:
 				return English
 			}
@@ -334,6 +337,78 @@ func getMessages(lang Language) Messages {
 			// Other messages
 			NoDirectorySelected:  "ℹ️  디렉토리가 선택되지 않았거나 작업이 취소되었습니다.",
 			CreatedDefaultConfig: "기본 설정 파일을 생성했습니다:",
+		}
+	case Spanish:
+		return Messages{
+			// Interactive mode messages
+			AvailableDestinations: "👉 Destinos disponibles:",
+			AddCurrentDirectory:   "[+] Agregar directorio actual",
+			EnterChoice:           "Ingrese número, tecla de acceso rápido, nombre de etiqueta o [+]:",
+			EnterChoicePrompt:     "Destino:",
+
+			// Navigation messages
+			OpeningShell:     "🚀 Abriendo nuevo shell en:",
+			Destination:      "📍 Destino:",
+			TypeExitToReturn: "💡 Escriba 'exit' para regresar al shell anterior",
+			YouAreNowIn:      "✅ Ahora está en:",
+			FoundDestination: "🎯 Destino encontrado:",
+
+			// Add directory messages
+			CurrentDirectory:      "📍 Directorio actual:",
+			EnterLabel:            "Ingrese una etiqueta para este directorio:",
+			EnterShortcut:         "Ingrese una tecla de acceso rápido:",
+			EnterShortcutOptional: "Ingrese una tecla de acceso rápido (opcional, presione Enter para omitir):",
+			LabelCannotBeEmpty:    "❌ La etiqueta no puede estar vacía.",
+			Added:                 "✅ Agregado:",
+			Shortcut:              "🔑 Acceso rápido:",
+
+			// Error messages
+			ErrorGettingUser:         "❌ Error obteniendo usuario actual:",
+			ErrorReadingConfig:       "❌ Error leyendo archivo de configuración:",
+			NoDestinationsConfigured: "⚠️  No hay destinos configurados en ~/.goto.toml",
+			DestinationNotFound:      "❌ Destino '%s' no encontrado.",
+			DirectoryNotExist:        "❌ El directorio no existe:",
+			ErrorOpeningShell:        "❌ Error abriendo shell:",
+			ErrorCreatingTempFile:    "❌ Error creando archivo temporal:",
+			ErrorWritingTempScript:   "❌ Error escribiendo script temporal:",
+			ErrorMakingExecutable:    "❌ Error haciendo ejecutable el script:",
+			ErrorOpeningConfigFile:   "❌ Error abriendo archivo de configuración:",
+			ErrorWritingConfigFile:   "❌ Error escribiendo archivo de configuración:",
+			ErrorGettingCurrentDir:   "❌ Error obteniendo directorio actual:",
+			OperationCancelled:       "❌ Operación cancelada.",
+			InvalidInput:             "Entrada inválida.",
+
+			// History messages
+			RecentUsageHistory:           "📈 Historial de uso reciente:",
+			NoUsageHistoryFound:          "📈 No se encontró historial de uso.",
+			WarningFailedToUpdateHistory: "⚠️  Advertencia: Falló al actualizar historial:",
+
+			// Command messages
+			WillExecute:      "⚡ Ejecutará:",
+			ExecutingCommand: "⚡ Ejecutando:",
+			CommandCompleted: "✅ Comando completado. Ahora está en:",
+
+			// Help messages
+			NavigateDirectoriesQuickly: "🚀 goto - Navegar directorios rápidamente",
+			ConfigurationFile:          "Archivo de configuración:",
+			Usage:                      "Uso:",
+			ShowInteractiveMenu:        "Mostrar menú interactivo",
+			GoToDestinationByNumber:    "Ir al destino por número (ej., goto 1)",
+			GoToDestinationByLabel:     "Ir al destino por nombre de etiqueta",
+			GoToDestinationByShortcut:  "Ir al destino por tecla de acceso rápido",
+			ShowHelpMessage:            "Mostrar este mensaje de ayuda",
+			ShowVersionInfo:            "Mostrar información de versión",
+			ShowCompletionCandidates:   "Mostrar candidatos de completado (para completado de shell)",
+			ShowRecentUsageHistory:     "Mostrar historial de uso reciente",
+			Examples:                   "Ejemplos:",
+			NavigateToFirstDest:        "# Navegar al 1er destino",
+			NavigateToHomeDest:         "# Navegar al destino 'Home'",
+			NavigateUsingShortcut:      "# Navegar usando acceso rápido 'h'",
+			ShowInteractiveMenuExample: "# Mostrar menú interactivo",
+
+			// Other messages
+			NoDirectorySelected:  "ℹ️  No se seleccionó directorio o la operación fue cancelada.",
+			CreatedDefaultConfig: "Archivo de configuración por defecto creado:",
 		}
 	default: // English
 		return Messages{
