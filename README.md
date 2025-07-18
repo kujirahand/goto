@@ -10,6 +10,15 @@ This is a Go implementation providing fast, dependency-free directory navigation
 2. **Make it executable** and place in your PATH
 3. **Run** `goto` to see the interactive menu
 
+## Key Features
+
+- **Fast Directory Navigation**: Jump to frequently used directories instantly
+- **Smart History**: Automatically sorts destinations by most recently used
+- **Multiple Input Methods**: Use numbers, labels, or shortcut keys
+- **Tab Completion**: Bash and Zsh completion support
+- **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Zero Dependencies**: Single binary with no external dependencies
+
 ## Install
 
 Please install `goto` command by following the steps below.
@@ -255,6 +264,15 @@ goto MyProject
 # Using shortcut key
 goto h
 goto p
+
+# View usage history
+goto --history
+
+# Show help
+goto --help
+
+# Show version
+goto --version
 ```
 
 This is useful for scripting or when you know exactly where you want to go.
@@ -317,6 +335,65 @@ When you select a destination, `goto` opens a new shell session in the target di
 - Type `exit` to return to your previous shell
 - If a `command` is specified in the configuration, it will be executed automatically
 
+### Usage History
+
+`goto` automatically tracks usage history and displays destinations in order of most recently used. This makes frequently accessed directories appear at the top of the interactive menu.
+
+#### Viewing Usage History
+
+You can view your recent usage history with:
+
+```sh
+goto --history
+```
+
+Example output:
+
+```text
+📈 Recent usage history:
+==================================================
+ 1. Home → /Users/username
+    📅 2025-07-18 16:08:38
+
+ 2. Desktop → /Users/username/Desktop
+    📅 2025-07-18 16:04:40
+
+ 3. MyProject → /Users/username/workspace/my-project
+    📅 2025-07-18 15:30:15
+```
+
+#### How History Works
+
+- **Automatic tracking**: Every time you navigate to a destination, the timestamp is recorded
+- **Smart sorting**: In interactive mode, destinations are sorted by most recently used first
+- **Persistent storage**: History is stored in the `~/.goto.toml` configuration file
+- **No manual maintenance**: History is automatically updated - no need to manually manage it
+
+#### History Storage
+
+Usage history is stored in your `~/.goto.toml` file in the following format:
+
+```toml
+[[history]]
+  label = "Home"
+  last_used = "2025-07-18T16:08:38+09:00"
+
+[[history]]
+  label = "Desktop"
+  last_used = "2025-07-18T16:04:40+09:00"
+
+# ... your destinations ...
+[Home]
+path = "~/"
+shortcut = "h"
+
+[Desktop]
+path = "~/Desktop"
+shortcut = "d"
+```
+
+This intelligent ordering ensures that your most frequently used directories are always easily accessible.
+
 ### Examples
 
 1. **Navigate using command line argument (number):**
@@ -355,6 +432,12 @@ When you select a destination, `goto` opens a new shell session in the target di
    # Enter: +
    # Label: ImportantProject
    # Shortcut: i
+   ```
+
+6. **View usage history:**
+
+   ```sh
+   goto --history
    ```
 
 
