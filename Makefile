@@ -8,7 +8,7 @@ all: build-go
 # Build Go version
 build-go:
 	@echo "Building Go version..."
-	cd go && go build -o goto goto.go config.go goto_version.go
+	cd go && go build -o goto goto.go config.go goto_version.go locale.go
 	@echo "✅ Go version built successfully: go/goto"
 
 # Build release binaries for multiple platforms
@@ -16,17 +16,17 @@ build-release:
 	@echo "Building release binaries for multiple platforms..."
 	@mkdir -p releases
 	@echo "Building for Linux amd64..."
-	cd go && GOOS=linux GOARCH=amd64 go build -o ../releases/goto-linux-amd64 goto.go config.go goto_version.go
+	cd go && GOOS=linux GOARCH=amd64 go build -o ../releases/goto-linux-amd64 goto.go config.go goto_version.go locale.go
 	@echo "Building for Linux arm64..."
-	cd go && GOOS=linux GOARCH=arm64 go build -o ../releases/goto-linux-arm64 goto.go config.go goto_version.go
+	cd go && GOOS=linux GOARCH=arm64 go build -o ../releases/goto-linux-arm64 goto.go config.go goto_version.go locale.go
 	@echo "Building for macOS amd64 (Intel)..."
-	cd go && GOOS=darwin GOARCH=amd64 go build -o ../releases/goto-darwin-amd64 goto.go config.go goto_version.go
+	cd go && GOOS=darwin GOARCH=amd64 go build -o ../releases/goto-darwin-amd64 goto.go config.go goto_version.go locale.go
 	@echo "Building for macOS arm64 (Apple Silicon)..."
-	cd go && GOOS=darwin GOARCH=arm64 go build -o ../releases/goto-darwin-arm64 goto.go config.go goto_version.go
+	cd go && GOOS=darwin GOARCH=arm64 go build -o ../releases/goto-darwin-arm64 goto.go config.go goto_version.go locale.go
 	@echo "Building for Windows amd64..."
-	cd go && GOOS=windows GOARCH=amd64 go build -o ../releases/goto-windows-amd64.exe goto.go config.go goto_version.go
+	cd go && GOOS=windows GOARCH=amd64 go build -o ../releases/goto-windows-amd64.exe goto.go config.go goto_version.go locale.go
 	@echo "Building for Windows arm64..."
-	cd go && GOOS=windows GOARCH=arm64 go build -o ../releases/goto-windows-arm64.exe goto.go config.go goto_version.go
+	cd go && GOOS=windows GOARCH=arm64 go build -o ../releases/goto-windows-arm64.exe goto.go config.go goto_version.go locale.go
 	@echo "✅ All release binaries built successfully in releases/ directory"
 
 # Install Go version to /usr/local/bin

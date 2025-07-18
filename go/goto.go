@@ -38,10 +38,14 @@ type ConfigWithHistory struct {
 type Config map[string]Destination
 
 func main() {
+	// Initialize language support
+	currentLanguage = detectLanguage()
+	messages = getMessages(currentLanguage)
+
 	// Get configuration file path
 	usr, err := user.Current()
 	if err != nil {
-		fmt.Printf("❌ Error getting current user: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
 		os.Exit(1)
 	}
 
@@ -55,7 +59,7 @@ func main() {
 	// Load configuration with history for sorting
 	configWithHistory, err := loadConfigWithHistory(tomlFile)
 	if err != nil {
-		fmt.Printf("❌ Error reading configuration file: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorReadingConfig, err)
 		os.Exit(1)
 	}
 
@@ -64,7 +68,7 @@ func main() {
 	shortcutMap := buildShortcutMap(entries)
 
 	if len(entries) == 0 {
-		fmt.Println("⚠️  No destinations configured in ~/.goto.toml")
+		fmt.Println(messages.NoDestinationsConfigured)
 		os.Exit(1)
 	}
 
@@ -90,11 +94,17 @@ func main() {
 			os.Exit(0)
 		}
 
+		// Handle history option
+		if arg == "--history" {
+			showHistory(configWithHistory)
+			os.Exit(0)
+		}
+
 		// Find destination by argument
 		targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
 
 		if targetDir == "" {
-			fmt.Printf("❌ Destination '%s' not found.\n", arg)
+			fmt.Printf(messages.DestinationNotFound, arg)
 			fmt.Println("\n📋 Available destinations:")
 			for _, entry := range entries {
 				shortcutStr := ""
@@ -107,14 +117,14 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Printf("🎯 Found destination: %s\n", label)
+		fmt.Printf("%s %s\n", messages.FoundDestination, label)
 		success := openNewShell(targetDir, command, label)
 		if success {
 			// Update history
 			if label != "" {
 				err := updateHistory(tomlFile, label)
 				if err != nil {
-					fmt.Printf("⚠️  Warning: Failed to update history: %v\n", err)
+					fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
 				}
 			}
 			os.Exit(0)
@@ -136,7 +146,7 @@ func main() {
 	}
 
 	if targetDir == "" {
-		fmt.Println("ℹ️  No directory selected or operation cancelled.")
+		fmt.Println(messages.NoDirectorySelected)
 		os.Exit(0)
 	}
 
@@ -146,7 +156,7 @@ func main() {
 		if label != "" {
 			err := updateHistory(tomlFile, label)
 			if err != nil {
-				fmt.Printf("⚠️  Warning: Failed to update history: %v\n", err)
+				fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
 			}
 		}
 		os.Exit(0)
@@ -166,10 +176,10 @@ type Entry struct {
 func createDefaultConfig(tomlFile string) {
 	err := os.WriteFile(tomlFile, []byte(DefaultConfig), 0644)
 	if err != nil {
-		fmt.Printf("❌ Error creating default configuration: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorWritingConfigFile, err)
 		os.Exit(1)
 	}
-	fmt.Printf("Created default configuration file: %s\n", tomlFile)
+	fmt.Printf("%s %s\n", messages.CreatedDefaultConfig, tomlFile)
 }
 
 func loadConfigWithHistory(tomlFile string) (ConfigWithHistory, error) {
@@ -357,7 +367,7 @@ func expandPath(path string) string {
 }
 
 func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string) (string, string, string) {
-	fmt.Println("👉 Available destinations:")
+	fmt.Println(messages.AvailableDestinations)
 	for i, entry := range entries {
 		expandedPath := expandPath(entry.Path)
 		shortcutStr := ""
@@ -367,14 +377,14 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 		fmt.Printf("%d. %s → %s%s\n", i+1, entry.Label, expandedPath, shortcutStr)
 	}
 
-	fmt.Println("\n➕ [+] Add current directory")
-	fmt.Println("\nPlease enter the number, shortcut key, label name, or [+] to add current directory:")
+	fmt.Printf("\n%s\n", messages.AddCurrentDirectory)
+	fmt.Printf("\n%s\n", messages.EnterChoice)
 
-	fmt.Print("Enter number, shortcut key, label name, or [+]: ")
+	fmt.Printf("%s ", messages.EnterChoicePrompt)
 	reader := bufio.NewReader(os.Stdin)
 	choice, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("\nOperation cancelled.")
+		fmt.Printf("\n%s\n", messages.OperationCancelled)
 		return "", "", ""
 	}
 
@@ -410,20 +420,20 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 		return expandedPath, entry.Command, entry.Label
 	}
 
-	fmt.Println("Invalid input.")
+	fmt.Println(messages.InvalidInput)
 	return "", "", ""
 }
 
 func openNewShell(targetDir, command, label string) bool {
 	// Check if directory exists
 	if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-		fmt.Printf("❌ Directory does not exist: %s\n", targetDir)
+		fmt.Printf("%s %s\n", messages.DirectoryNotExist, targetDir)
 		return false
 	}
 
-	fmt.Printf("🚀 Opening new shell in: %s\n", targetDir)
+	fmt.Printf("%s %s\n", messages.OpeningShell, targetDir)
 	if label != "" {
-		fmt.Printf("📍 Destination: %s\n", label)
+		fmt.Printf("%s %s\n", messages.Destination, label)
 	}
 
 	// Get user's preferred shell
@@ -433,7 +443,7 @@ func openNewShell(targetDir, command, label string) bool {
 	}
 
 	if command != "" {
-		fmt.Printf("⚡ Will execute: %s\n", command)
+		fmt.Printf("%s %s\n", messages.WillExecute, command)
 		fmt.Println(strings.Repeat("=", 50))
 
 		// Create a temporary startup script
@@ -449,15 +459,15 @@ func openNewShell(targetDir, command, label string) bool {
 
 		err := cmd.Run()
 		if err != nil {
-			fmt.Printf("❌ Error opening shell: %v\n", err)
+			fmt.Printf("%s %v\n", messages.ErrorOpeningShell, err)
 			return false
 		}
 	} else {
 		// Simply open shell in the target directory
-		fmt.Println("💡 Type 'exit' to return to previous shell")
+		fmt.Println(messages.TypeExitToReturn)
 		fmt.Println(strings.Repeat("=", 50))
 
-		fmt.Printf("✅ You are now in: %s\n", targetDir)
+		fmt.Printf("%s %s\n", messages.YouAreNowIn, targetDir)
 
 		// Start new shell with the target directory as working directory
 		cmd := exec.Command(shell)
@@ -468,7 +478,7 @@ func openNewShell(targetDir, command, label string) bool {
 
 		err := cmd.Run()
 		if err != nil {
-			fmt.Printf("❌ Error opening shell: %v\n", err)
+			fmt.Printf("%s %v\n", messages.ErrorOpeningShell, err)
 			return false
 		}
 	}
@@ -479,25 +489,27 @@ func openNewShell(targetDir, command, label string) bool {
 func createTempScript(targetDir, command, shell string) string {
 	tempFile, err := os.CreateTemp("", "goto_*.sh")
 	if err != nil {
-		fmt.Printf("❌ Error creating temp file: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorCreatingTempFile, err)
 		os.Exit(1)
 	}
 
 	scriptContent := fmt.Sprintf(`#!/bin/sh
 cd "%s"
-echo "📍 Current directory: $(pwd)"
-echo "⚡ Executing: %s"
+echo "%s $(pwd)"
+echo "%s %s"
 echo "%s"
 %s
 echo "%s"
-echo "✅ Command completed. You are now in: $(pwd)"
-echo "💡 Type 'exit' to return to previous shell"
+echo "%s $(pwd)"
+echo "%s"
 exec "%s"
-`, targetDir, command, strings.Repeat("-", 40), command, strings.Repeat("-", 40), shell)
+`, targetDir, messages.CurrentDirectory, messages.ExecutingCommand, command,
+		strings.Repeat("-", 40), command, strings.Repeat("-", 40),
+		messages.CommandCompleted, messages.TypeExitToReturn, shell)
 
 	_, err = tempFile.WriteString(scriptContent)
 	if err != nil {
-		fmt.Printf("❌ Error writing temp script: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorWritingTempScript, err)
 		os.Exit(1)
 	}
 
@@ -506,7 +518,7 @@ exec "%s"
 	// Make executable
 	err = os.Chmod(tempFile.Name(), 0755)
 	if err != nil {
-		fmt.Printf("❌ Error making script executable: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorMakingExecutable, err)
 		os.Exit(1)
 	}
 
@@ -516,31 +528,31 @@ exec "%s"
 func addCurrentPathToConfig(tomlFile string) bool {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		fmt.Printf("❌ Error getting current directory: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorGettingCurrentDir, err)
 		return false
 	}
 
-	fmt.Printf("📍 Current directory: %s\n", currentDir)
+	fmt.Printf("%s %s\n", messages.CurrentDirectory, currentDir)
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter a label for this directory: ")
+	fmt.Printf("%s ", messages.EnterLabel)
 	label, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("\n❌ Operation cancelled.")
+		fmt.Printf("\n%s\n", messages.OperationCancelled)
 		return false
 	}
 
 	label = strings.TrimSpace(label)
 	if label == "" {
-		fmt.Println("❌ Label cannot be empty.")
+		fmt.Println(messages.LabelCannotBeEmpty)
 		return false
 	}
 
-	fmt.Print("Enter a shortcut key (optional, press Enter to skip): ")
+	fmt.Printf("%s ", messages.EnterShortcutOptional)
 	shortcut, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("\n❌ Operation cancelled.")
+		fmt.Printf("\n%s\n", messages.OperationCancelled)
 		return false
 	}
 
@@ -556,20 +568,20 @@ func addCurrentPathToConfig(tomlFile string) bool {
 	// Append to TOML file
 	file, err := os.OpenFile(tomlFile, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("❌ Error opening config file: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorOpeningConfigFile, err)
 		return false
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(tomlEntry)
 	if err != nil {
-		fmt.Printf("❌ Error writing to config file: %v\n", err)
+		fmt.Printf("%s %v\n", messages.ErrorWritingConfigFile, err)
 		return false
 	}
 
-	fmt.Printf("✅ Added '%s' → %s\n", label, currentDir)
+	fmt.Printf("%s '%s' → %s\n", messages.Added, label, currentDir)
 	if shortcut != "" {
-		fmt.Printf("🔑 Shortcut: %s\n", shortcut)
+		fmt.Printf("%s %s\n", messages.Shortcut, shortcut)
 	}
 
 	return true
@@ -616,26 +628,62 @@ func showHelp() {
 		configPath = filepath.Join(usr.HomeDir, ".goto.toml")
 	}
 
-	fmt.Println("🚀 goto - Navigate directories quickly")
-	fmt.Printf("\nConfiguration file: %s\n", configPath)
-	fmt.Println("\nUsage:")
-	fmt.Println("  goto                 Show interactive menu")
-	fmt.Println("  goto <number>        Go to destination by number (e.g., goto 1)")
-	fmt.Println("  goto <label>         Go to destination by label name")
-	fmt.Println("  goto <shortcut>      Go to destination by shortcut key")
-	fmt.Println("  goto -h, --help      Show this help message")
-	fmt.Println("  goto -v, --version   Show version information")
-	fmt.Println("  goto --complete      Show completion candidates (for shell completion)")
-	fmt.Println("\nExamples:")
-	fmt.Println("  goto 1              # Navigate to 1st destination")
-	fmt.Println("  goto Home           # Navigate to 'Home' destination")
-	fmt.Println("  goto h              # Navigate using shortcut 'h'")
-	fmt.Println("  goto                # Show interactive menu")
+	fmt.Println(messages.NavigateDirectoriesQuickly)
+	fmt.Printf("\n%s %s\n", messages.ConfigurationFile, configPath)
+	fmt.Printf("\n%s\n", messages.Usage)
+	fmt.Printf("  goto                 %s\n", messages.ShowInteractiveMenu)
+	fmt.Printf("  goto <number>        %s\n", messages.GoToDestinationByNumber)
+	fmt.Printf("  goto <label>         %s\n", messages.GoToDestinationByLabel)
+	fmt.Printf("  goto <shortcut>      %s\n", messages.GoToDestinationByShortcut)
+	fmt.Printf("  goto -h, --help      %s\n", messages.ShowHelpMessage)
+	fmt.Printf("  goto -v, --version   %s\n", messages.ShowVersionInfo)
+	fmt.Printf("  goto --complete      %s\n", messages.ShowCompletionCandidates)
+	fmt.Printf("  goto --history       %s\n", messages.ShowRecentUsageHistory)
+	fmt.Printf("\n%s\n", messages.Examples)
+	fmt.Printf("  goto 1              %s\n", messages.NavigateToFirstDest)
+	fmt.Printf("  goto Home           %s\n", messages.NavigateToHomeDest)
+	fmt.Printf("  goto h              %s\n", messages.NavigateUsingShortcut)
+	fmt.Printf("  goto                %s\n", messages.ShowInteractiveMenuExample)
 }
 
 func showCompletions(entries []Entry) {
 	// Output only labels for completion
 	for _, entry := range entries {
 		fmt.Println(entry.Label)
+	}
+}
+
+func showHistory(config ConfigWithHistory) {
+	if len(config.History) == 0 {
+		fmt.Println(messages.NoUsageHistoryFound)
+		return
+	}
+
+	fmt.Println(messages.RecentUsageHistory)
+	fmt.Println(strings.Repeat("=", 50))
+
+	// Sort history by most recent first
+	sortedHistory := make([]HistoryEntry, len(config.History))
+	copy(sortedHistory, config.History)
+	sort.Slice(sortedHistory, func(i, j int) bool {
+		return sortedHistory[i].LastUsed.After(sortedHistory[j].LastUsed)
+	})
+
+	for i, hist := range sortedHistory {
+		// Format timestamp for display
+		timeStr := hist.LastUsed.Format("2006-01-02 15:04:05")
+
+		// Get destination path if exists
+		pathStr := ""
+		if dest, exists := config.Destinations[hist.Label]; exists {
+			pathStr = fmt.Sprintf(" → %s", expandPath(dest.Path))
+		}
+
+		fmt.Printf("%2d. %s%s\n", i+1, hist.Label, pathStr)
+		fmt.Printf("    📅 %s\n", timeStr)
+
+		if i < len(sortedHistory)-1 {
+			fmt.Println()
+		}
 	}
 }

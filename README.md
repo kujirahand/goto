@@ -4,6 +4,8 @@
 
 This is a Go implementation providing fast, dependency-free directory navigation.
 
+- [日本語](README-ja.md) / [中文](README-zh.md) / [한국어](README-ko.md)
+
 ## Quick Start
 
 1. **Download** the latest binary for your platform from [Releases](https://github.com/kujirahand/goto/releases)
@@ -17,6 +19,7 @@ This is a Go implementation providing fast, dependency-free directory navigation
 - **Multiple Input Methods**: Use numbers, labels, or shortcut keys
 - **Tab Completion**: Bash and Zsh completion support
 - **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Multilingual Support**: Automatic language detection (English, Japanese, Chinese, Korean)
 - **Zero Dependencies**: Single binary with no external dependencies
 
 ## Install
@@ -393,6 +396,95 @@ shortcut = "d"
 ```
 
 This intelligent ordering ensures that your most frequently used directories are always easily accessible.
+
+## Multilingual Support
+
+`goto` automatically detects your system language and displays messages in your preferred language. Currently supported languages:
+
+- **English** (en) - Default
+- **Japanese** (ja) - 日本語
+- **Chinese** (zh) - 中文
+- **Korean** (ko) - 한국어
+
+### How Language Detection Works
+
+The application automatically detects your system language by checking the following environment variables in order:
+
+1. `LANG`
+2. `LANGUAGE`
+3. `LC_ALL`
+4. `LC_MESSAGES`
+
+For example, if your system is set to Japanese (`LANG=ja_JP.UTF-8`), `goto` will automatically display all messages in Japanese.
+
+### Example Output in Different Languages
+
+**English:**
+
+```text
+🚀 goto - Navigate directories quickly
+👉 Available destinations:
+1. Home → /Users/username/ (shortcut: h)
+📈 Recent usage history:
+```
+
+**Japanese:**
+
+```text
+🚀 goto - ディレクトリ間を素早く移動
+👉 利用可能なディレクトリ:
+1. Home → /Users/username/ (shortcut: h)
+📈 最近の使用履歴:
+```
+
+**Chinese:**
+
+```text
+🚀 goto - 快速导航目录
+👉 可用目录:
+1. Home → /Users/username/ (shortcut: h)
+📈 最近使用历史:
+```
+
+**Korean:**
+
+```text
+🚀 goto - 디렉토리 빠른 탐색
+👉 사용 가능한 디렉토리:
+1. Home → /Users/username/ (shortcut: h)
+📈 최근 사용 기록:
+```
+
+### Language Override
+
+If you want to use a specific language regardless of your system settings, you can set the `LANG` environment variable:
+
+```sh
+# Use Japanese interface
+LANG=ja_JP.UTF-8 goto
+
+# Use English interface
+LANG=en_US.UTF-8 goto
+
+# Use Chinese interface
+LANG=zh_CN.UTF-8 goto
+
+# Use Korean interface
+LANG=ko_KR.UTF-8 goto
+```
+
+### Supported Languages
+
+The multilingual support covers all user interface elements including:
+
+- Interactive menu messages
+- Navigation confirmations
+- Error messages
+- Help text
+- History display
+- Configuration messages
+
+All messages are automatically localized based on your system language settings, providing a native experience for international users.
 
 ### Examples
 
