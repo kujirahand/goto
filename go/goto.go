@@ -324,15 +324,46 @@ func loadConfigWithHistory(tomlFile string) (ConfigWithHistory, error) {
 func getEntriesWithHistory(config ConfigWithHistory) []Entry {
 	var entries []Entry
 
-	// Create a map for quick lookup of destination data
-	destMap := make(map[string]Destination)
-	for label, dest := range config.Destinations {
-		destMap[label] = dest
+	// Load history from separate JSON file
+	historyFile, err := getHistoryFilePath()
+	if err != nil {
+		// If we can't get history file path, proceed without history sorting
+		for label, dest := range config.Destinations {
+			entries = append(entries, Entry{
+				Label:    label,
+				Path:     dest.Path,
+				Shortcut: dest.Shortcut,
+				Command:  dest.Command,
+			})
+		}
+		// Sort alphabetically if no history available
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].Label < entries[j].Label
+		})
+		return entries
+	}
+
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If history file doesn't exist or has error, proceed without history sorting
+		for label, dest := range config.Destinations {
+			entries = append(entries, Entry{
+				Label:    label,
+				Path:     dest.Path,
+				Shortcut: dest.Shortcut,
+				Command:  dest.Command,
+			})
+		}
+		// Sort alphabetically if no history available
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].Label < entries[j].Label
+		})
+		return entries
 	}
 
 	// Create a map for quick lookup of history
 	historyMap := make(map[string]time.Time)
-	for _, hist := range config.History {
+	for _, hist := range history.Entries {
 		historyMap[hist.Label] = hist.LastUsed
 	}
 
