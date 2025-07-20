@@ -89,6 +89,11 @@ type Messages struct {
 	NavigateUsingShortcut       string
 	ShowInteractiveMenuExample  string
 
+	// Interactive cursor mode messages
+	CursorModeHint       string
+	BackToCursorModeHint string
+	CursorNavigationHint string
+
 	// Other messages
 	NoDirectorySelected  string
 	CreatedDefaultConfig string
@@ -200,6 +205,11 @@ func getMessages(lang Language) Messages {
 			NavigateUsingShortcut:       "# ショートカット 'h' を使用して移動",
 			ShowInteractiveMenuExample:  "# インタラクティブメニューを表示",
 
+			// Interactive cursor mode messages
+			CursorModeHint:       "💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに切り替え",
+			BackToCursorModeHint: "💡 ヒント: Enterキーのみでカーソル移動モードに戻る",
+			CursorNavigationHint: "💡 ↑↓キーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  ディレクトリが選択されていないか、操作がキャンセルされました。",
 			CreatedDefaultConfig: "デフォルト設定ファイルを作成しました:",
@@ -276,6 +286,11 @@ func getMessages(lang Language) Messages {
 			NavigateToHomeDest:          "# 导航到 'Home' 目录",
 			NavigateUsingShortcut:       "# 使用快捷键 'h' 导航",
 			ShowInteractiveMenuExample:  "# 显示交互式菜单",
+
+			// Interactive cursor mode messages
+			CursorModeHint:       "💡 用↑↓/j/k键移动，Enter确认，数字・快捷键直接选择，ESC切换到普通模式",
+			BackToCursorModeHint: "💡 提示: 只按Enter键返回光标移动模式",
+			CursorNavigationHint: "💡 用↑↓键移动，Enter确认，数字・快捷键直接选择，ESC切换到普通模式",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  未选择目录或操作已取消。",
@@ -354,6 +369,11 @@ func getMessages(lang Language) Messages {
 			NavigateUsingShortcut:       "# 단축키 'h' 사용하여 이동",
 			ShowInteractiveMenuExample:  "# 대화형 메뉴 표시",
 
+			// Interactive cursor mode messages
+			CursorModeHint:       "💡 ↑↓/j/k키로 이동, Enter로 결정, 숫자・단축키로 직접 선택, ESC로 일반 모드 전환",
+			BackToCursorModeHint: "💡 팁: Enter키만으로 커서 이동 모드로 돌아가기",
+			CursorNavigationHint: "💡 ↑↓키로 이동, Enter로 결정, 숫자・단축키로 직접 선택, ESC로 일반 모드 전환",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  디렉토리가 선택되지 않았거나 작업이 취소되었습니다.",
 			CreatedDefaultConfig: "기본 설정 파일을 생성했습니다:",
@@ -431,6 +451,11 @@ func getMessages(lang Language) Messages {
 			NavigateUsingShortcut:       "# Navegar usando acceso rápido 'h'",
 			ShowInteractiveMenuExample:  "# Mostrar menú interactivo",
 
+			// Interactive cursor mode messages
+			CursorModeHint:       "💡 Mover con ↑↓/j/k, Enter para decidir, números・accesos rápidos para selección directa, ESC para modo normal",
+			BackToCursorModeHint: "💡 Consejo: Solo presiona Enter para volver al modo de movimiento del cursor",
+			CursorNavigationHint: "💡 Mover con ↑↓, Enter para decidir, números・accesos rápidos para selección directa, ESC para modo normal",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No se seleccionó directorio o la operación fue cancelada.",
 			CreatedDefaultConfig: "Archivo de configuración por defecto creado:",
@@ -507,6 +532,11 @@ func getMessages(lang Language) Messages {
 			NavigateToHomeDest:          "# Navigate to 'Home' destination",
 			NavigateUsingShortcut:       "# Navigate using shortcut 'h'",
 			ShowInteractiveMenuExample:  "# Show interactive menu",
+
+			// Interactive cursor mode messages
+			CursorModeHint:       "💡 Move with ↑↓/j/k keys, Enter to decide, numbers・shortcuts for direct selection, ESC to switch to normal mode",
+			BackToCursorModeHint: "💡 Hint: Press Enter only to return to cursor movement mode",
+			CursorNavigationHint: "💡 Move with ↑↓ keys, Enter to decide, numbers・shortcuts for direct selection, ESC to switch to normal mode",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No directory selected or operation cancelled.",

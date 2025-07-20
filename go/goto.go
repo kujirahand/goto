@@ -269,10 +269,10 @@ func loadHistory(historyFile string) (History, error) {
 		sort.Slice(history.Entries, func(i, j int) bool {
 			return history.Entries[i].LastUsed.After(history.Entries[j].LastUsed)
 		})
-		
+
 		// Keep only the latest 100 entries
 		history.Entries = history.Entries[:maxHistoryEntries]
-		
+
 		// Save the trimmed history back to file
 		go func() {
 			// Save asynchronously to avoid blocking the main operation
@@ -290,7 +290,7 @@ func saveHistory(historyFile string, history History) error {
 		sort.Slice(history.Entries, func(i, j int) bool {
 			return history.Entries[i].LastUsed.After(history.Entries[j].LastUsed)
 		})
-		
+
 		// Keep only the latest 100 entries
 		history.Entries = history.Entries[:maxHistoryEntries]
 	}
@@ -610,7 +610,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 	// 初期表示（カーソルモードで開始）
 	displayEntries(selectedIndex, true)
 	fmt.Printf("%s\n", messages.AddCurrentDirectory)
-	fmt.Printf("💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに切り替え\n")
+	fmt.Printf("%s\n", messages.CursorModeHint)
 
 	for {
 		if !cursorMode {
@@ -618,7 +618,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 			displayEntries(selectedIndex, false)
 			fmt.Printf("%s\n", messages.AddCurrentDirectory)
 			fmt.Printf("%s\n", messages.EnterChoice)
-			fmt.Printf("💡 ヒント: Enterキーのみでカーソル移動モードに戻る\n")
+			fmt.Printf("%s\n", messages.BackToCursorModeHint)
 			fmt.Printf("%s ", messages.EnterChoicePrompt)
 
 			// 通常の入力モード
@@ -639,7 +639,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 				PrintWhiteBackgroundLine(messages.AvailableDestinations)
 				displayEntries(selectedIndex, true)
 				fmt.Printf("%s\n", messages.AddCurrentDirectory)
-				fmt.Printf("💡 ↑↓キーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る\n")
+				fmt.Printf("%s\n", messages.CursorModeHint)
 				continue
 			}
 
@@ -784,7 +784,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 				fmt.Printf("\033[%dA", len(entries)+2)
 				displayEntries(selectedIndex, true)
 				fmt.Printf("%s\n", messages.AddCurrentDirectory)
-				fmt.Printf("💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る\n")
+				fmt.Printf("%s\n", messages.CursorNavigationHint)
 			}
 		}
 	}
@@ -797,7 +797,8 @@ func openNewShell(targetDir, command, label string) bool {
 		return false
 	}
 
-	fmt.Printf("%s %s\n", messages.OpeningShell, targetDir)
+	openShellMessage := fmt.Sprintf("%s %s", messages.OpeningShell, targetDir)
+	PrintWhiteBackgroundLine(openShellMessage)
 	if label != "" {
 		fmt.Printf("%s %s\n", messages.Destination, label)
 	}
