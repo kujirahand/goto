@@ -44,6 +44,9 @@ type Messages struct {
 	// Error messages
 	ErrorGettingUser         string
 	ErrorReadingConfig       string
+	ConfigFile               string
+	ErrorDetails             string
+	ConfigFixSuggestion      string
 	NoDestinationsConfigured string
 	DestinationNotFound      string
 	DirectoryNotExist        string
@@ -151,7 +154,10 @@ func getMessages(lang Language) Messages {
 
 			// Error messages
 			ErrorGettingUser:         "❌ 現在のユーザーの取得エラー:",
-			ErrorReadingConfig:       "❌ 設定ファイルの読み取りエラー:",
+			ErrorReadingConfig:       "❌ 設定ファイルの読み取りエラーが発生しました",
+			ConfigFile:               "設定ファイル",
+			ErrorDetails:             "エラー詳細",
+			ConfigFixSuggestion:      "💡 設定ファイルを確認し、古い履歴データが含まれている場合は削除してください。または設定ファイルを削除すると、次回実行時に新しい設定ファイルが作成されます。",
 			NoDestinationsConfigured: "⚠️  ~/.goto.toml にディレクトリが設定されていません",
 			DestinationNotFound:      "❌ ディレクトリ '%s' が見つかりません。",
 			DirectoryNotExist:        "❌ ディレクトリが存在しません:",
@@ -225,7 +231,10 @@ func getMessages(lang Language) Messages {
 
 			// Error messages
 			ErrorGettingUser:         "❌ 获取当前用户错误:",
-			ErrorReadingConfig:       "❌ 读取配置文件错误:",
+			ErrorReadingConfig:       "❌ 配置文件读取错误",
+			ConfigFile:               "配置文件",
+			ErrorDetails:             "错误详情",
+			ConfigFixSuggestion:      "💡 请检查配置文件，如果包含旧的历史数据请删除。或者删除配置文件，下次运行时会创建新的配置文件。",
 			NoDestinationsConfigured: "⚠️  ~/.goto.toml 中未配置目录",
 			DestinationNotFound:      "❌ 未找到目录 '%s'。",
 			DirectoryNotExist:        "❌ 目录不存在:",
@@ -299,7 +308,10 @@ func getMessages(lang Language) Messages {
 
 			// Error messages
 			ErrorGettingUser:         "❌ 현재 사용자 가져오기 오류:",
-			ErrorReadingConfig:       "❌ 설정 파일 읽기 오류:",
+			ErrorReadingConfig:       "❌ 설정 파일 읽기 오류가 발생했습니다",
+			ConfigFile:               "설정 파일",
+			ErrorDetails:             "오류 세부사항",
+			ConfigFixSuggestion:      "💡 설정 파일을 확인하고 오래된 히스토리 데이터가 포함되어 있으면 삭제하세요. 또는 설정 파일을 삭제하면 다음 실행 시 새 설정 파일이 생성됩니다.",
 			NoDestinationsConfigured: "⚠️  ~/.goto.toml에 디렉토리가 설정되지 않았습니다",
 			DestinationNotFound:      "❌ 디렉토리 '%s'를 찾을 수 없습니다.",
 			DirectoryNotExist:        "❌ 디렉토리가 존재하지 않습니다:",
@@ -373,7 +385,10 @@ func getMessages(lang Language) Messages {
 
 			// Error messages
 			ErrorGettingUser:         "❌ Error obteniendo usuario actual:",
-			ErrorReadingConfig:       "❌ Error leyendo archivo de configuración:",
+			ErrorReadingConfig:       "❌ Error de lectura del archivo de configuración",
+			ConfigFile:               "Archivo de configuración",
+			ErrorDetails:             "Detalles del error",
+			ConfigFixSuggestion:      "💡 Verifique el archivo de configuración y elimine los datos de historial antiguos si están incluidos. O elimine el archivo de configuración para crear uno nuevo en la próxima ejecución.",
 			NoDestinationsConfigured: "⚠️  No hay destinos configurados en ~/.goto.toml",
 			DestinationNotFound:      "❌ Destino '%s' no encontrado.",
 			DirectoryNotExist:        "❌ El directorio no existe:",
@@ -447,7 +462,10 @@ func getMessages(lang Language) Messages {
 
 			// Error messages
 			ErrorGettingUser:         "❌ Error getting current user:",
-			ErrorReadingConfig:       "❌ Error reading configuration file:",
+			ErrorReadingConfig:       "❌ Configuration file reading error occurred",
+			ConfigFile:               "Configuration file",
+			ErrorDetails:             "Error details",
+			ConfigFixSuggestion:      "💡 Please check the configuration file and remove any old history data if included. Or delete the configuration file to create a new one on next run.",
 			NoDestinationsConfigured: "⚠️  No destinations configured in ~/.goto.toml",
 			DestinationNotFound:      "❌ Destination '%s' not found.",
 			DirectoryNotExist:        "❌ Directory does not exist:",

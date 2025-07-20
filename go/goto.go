@@ -81,7 +81,10 @@ func main() {
 	// Load configuration
 	config, err := loadConfig(tomlFile)
 	if err != nil {
-		fmt.Printf("%s %v\n", messages.ErrorReadingConfig, err)
+		fmt.Printf("%s\n", messages.ErrorReadingConfig)
+		fmt.Printf("📁 %s: %s\n", messages.ConfigFile, tomlFile)
+		fmt.Printf("🔍 %s: %v\n", messages.ErrorDetails, err)
+		fmt.Printf("💡 %s\n", messages.ConfigFixSuggestion)
 		os.Exit(1)
 	}
 
