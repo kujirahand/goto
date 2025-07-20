@@ -1,3 +1,37 @@
+# Release v1.1.0
+
+## 🚀 What's New
+
+### Enhanced History Management
+- **Separate history storage**: History data moved from `~/.goto.toml` to `~/.goto.history.json`
+- **Smart history sorting**: Destinations sorted by recent usage, with most frequently used items at the top
+- **Automatic history limits**: Maximum of 100 history entries to prevent file bloat and maintain performance
+- **Backward compatibility**: Seamless migration from old TOML-based history
+
+### Improved Error Handling
+- **Detailed error messages**: Clear error descriptions with file paths and suggested fixes
+- **Multi-language error support**: Error messages localized for all supported languages
+- **Config file validation**: Better handling of corrupted or outdated configuration files
+
+### Complete Localization
+- **Interactive cursor mode messages**: All hardcoded messages now properly localized
+- **5 language support**: Japanese, English, Chinese, Korean, and Spanish
+- **System language detection**: Automatically adapts to user's system language settings
+- **Consistent UI**: Unified white background styling for better visual consistency
+
+### User Experience Improvements
+- **Enhanced visual feedback**: Improved terminal output with consistent styling
+- **Better navigation hints**: Context-sensitive help messages for different interaction modes
+- **Optimized performance**: Faster startup and reduced memory usage with history limits
+
+## 🔧 Technical Improvements
+- **JSON-based history**: More efficient and flexible history storage format
+- **Asynchronous history saving**: Non-blocking history updates for better responsiveness
+- **Memory optimization**: Automatic cleanup of excessive history entries
+- **Code organization**: Better separation of concerns with dedicated locale management
+
+---
+
 # Release v1.0.0
 
 ## 🚀 Features
