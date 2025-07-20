@@ -18,6 +18,11 @@ import (
 	"golang.org/x/term"
 )
 
+// Constants
+const (
+	maxHistoryEntries = 100 // Maximum number of history entries to keep
+)
+
 // Destination represents a goto destination
 type Destination struct {
 	Path     string `toml:"path"`
@@ -258,10 +263,38 @@ func loadHistory(historyFile string) (History, error) {
 		return History{Entries: []HistoryEntry{}}, err
 	}
 
+	// Limit history to the latest 100 entries when loading
+	if len(history.Entries) > maxHistoryEntries {
+		// Sort by most recent first
+		sort.Slice(history.Entries, func(i, j int) bool {
+			return history.Entries[i].LastUsed.After(history.Entries[j].LastUsed)
+		})
+		
+		// Keep only the latest 100 entries
+		history.Entries = history.Entries[:maxHistoryEntries]
+		
+		// Save the trimmed history back to file
+		go func() {
+			// Save asynchronously to avoid blocking the main operation
+			saveHistory(historyFile, history)
+		}()
+	}
+
 	return history, nil
 }
 
 func saveHistory(historyFile string, history History) error {
+	// Limit history to the latest entries
+	if len(history.Entries) > maxHistoryEntries {
+		// Sort by most recent first
+		sort.Slice(history.Entries, func(i, j int) bool {
+			return history.Entries[i].LastUsed.After(history.Entries[j].LastUsed)
+		})
+		
+		// Keep only the latest 100 entries
+		history.Entries = history.Entries[:maxHistoryEntries]
+	}
+
 	data, err := json.MarshalIndent(history, "", "  ")
 	if err != nil {
 		return err
