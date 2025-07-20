@@ -2,7 +2,17 @@
 
 Comando `goto` para navegar directorios rápidamente.
 
-Esta es una implementación en Go que proporciona navegación de directorios rápida y sin dependencias.
+Esta es unAgregue el ejecutable `goto` compilado a su PATH agregando la siguiente línea a su archivo de configuración de shell (`.bashrc`, `.zshrc`, etc.):
+
+```sh
+export PATH="$PATH:/ruta/a/goto"
+```
+
+Por ejemplo, si clonó en su directorio de inicio:
+
+```sh
+export PATH="$PATH:$HOME/goto"
+```ación en Go que proporciona navegación de directorios rápida y sin dependencias.
 
 - [English](README.md) / [日本語](README-ja.md) / [中文](README-zh.md) / [한국어](README-ko.md)
 

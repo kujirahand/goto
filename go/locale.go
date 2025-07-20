@@ -37,6 +37,7 @@ type Messages struct {
 	EnterShortcut         string
 	EnterShortcutOptional string
 	LabelCannotBeEmpty    string
+	ShortcutAlreadyExists string
 	Added                 string
 	Shortcut              string
 
@@ -67,22 +68,23 @@ type Messages struct {
 	CommandCompleted string
 
 	// Help messages
-	NavigateDirectoriesQuickly string
-	ConfigurationFile          string
-	Usage                      string
-	ShowInteractiveMenu        string
-	GoToDestinationByNumber    string
-	GoToDestinationByLabel     string
-	GoToDestinationByShortcut  string
-	ShowHelpMessage            string
-	ShowVersionInfo            string
-	ShowCompletionCandidates   string
-	ShowRecentUsageHistory     string
-	Examples                   string
-	NavigateToFirstDest        string
-	NavigateToHomeDest         string
-	NavigateUsingShortcut      string
-	ShowInteractiveMenuExample string
+	NavigateDirectoriesQuickly  string
+	ConfigurationFile           string
+	Usage                       string
+	ShowInteractiveMenu         string
+	GoToDestinationByNumber     string
+	GoToDestinationByLabel      string
+	GoToDestinationByShortcut   string
+	ShowHelpMessage             string
+	ShowVersionInfo             string
+	ShowCompletionCandidates    string
+	ShowRecentUsageHistory      string
+	AddCurrentDirectoryToConfig string
+	Examples                    string
+	NavigateToFirstDest         string
+	NavigateToHomeDest          string
+	NavigateUsingShortcut       string
+	ShowInteractiveMenuExample  string
 
 	// Other messages
 	NoDirectorySelected  string
@@ -125,10 +127,10 @@ func getMessages(lang Language) Messages {
 	case Japanese:
 		return Messages{
 			// Interactive mode messages
-			AvailableDestinations: "👉 利用可能なディレクトリ:",
-			AddCurrentDirectory:   "[+] 現在のディレクトリを追加",
-			EnterChoice:           "番号、ショートカットキー、ラベル名、または[+]を入力してください:",
-			EnterChoicePrompt:     "移動先は:",
+			AvailableDestinations: "😊 どこに移動しますか？",
+			AddCurrentDirectory:   "🌱 [+] 現在のディレクトリを追加",
+			EnterChoice:           "[番号]、(キー)、ラベル、または[+]を入力してください:",
+			EnterChoicePrompt:     ">>>",
 
 			// Navigation messages
 			OpeningShell:     "🚀 新しいシェルを開いています:",
@@ -143,6 +145,7 @@ func getMessages(lang Language) Messages {
 			EnterShortcut:         "ショートカットキーを入力してください:",
 			EnterShortcutOptional: "ショートカットキーを入力してください（任意、Enterでスキップ）:",
 			LabelCannotBeEmpty:    "❌ ラベルは空にできません。",
+			ShortcutAlreadyExists: "❌ ショートカット '%s' は既に使用されています。別のショートカットを入力してください:",
 			Added:                 "✅ 追加しました:",
 			Shortcut:              "🔑 ショートカット:",
 
@@ -173,22 +176,23 @@ func getMessages(lang Language) Messages {
 			CommandCompleted: "✅ コマンドが完了しました。現在のディレクトリ:",
 
 			// Help messages
-			NavigateDirectoriesQuickly: "🚀 goto - ディレクトリ間を素早く移動",
-			ConfigurationFile:          "設定ファイル:",
-			Usage:                      "使用方法:",
-			ShowInteractiveMenu:        "インタラクティブメニューを表示",
-			GoToDestinationByNumber:    "番号でディレクトリに移動 (例: goto 1)",
-			GoToDestinationByLabel:     "ラベル名でディレクトリに移動",
-			GoToDestinationByShortcut:  "ショートカットキーでディレクトリに移動",
-			ShowHelpMessage:            "このヘルプメッセージを表示",
-			ShowVersionInfo:            "バージョン情報を表示",
-			ShowCompletionCandidates:   "補完候補を表示 (シェル補完用)",
-			ShowRecentUsageHistory:     "最近の使用履歴を表示",
-			Examples:                   "例:",
-			NavigateToFirstDest:        "# 1番目のディレクトリに移動",
-			NavigateToHomeDest:         "# 'Home' ディレクトリに移動",
-			NavigateUsingShortcut:      "# ショートカット 'h' を使用して移動",
-			ShowInteractiveMenuExample: "# インタラクティブメニューを表示",
+			NavigateDirectoriesQuickly:  "🚀 goto - ディレクトリ間を素早く移動",
+			ConfigurationFile:           "設定ファイル:",
+			Usage:                       "使用方法:",
+			ShowInteractiveMenu:         "インタラクティブメニューを表示",
+			GoToDestinationByNumber:     "番号でディレクトリに移動 (例: goto 1)",
+			GoToDestinationByLabel:      "ラベル名でディレクトリに移動",
+			GoToDestinationByShortcut:   "ショートカットキーでディレクトリに移動",
+			ShowHelpMessage:             "このヘルプメッセージを表示",
+			ShowVersionInfo:             "バージョン情報を表示",
+			ShowCompletionCandidates:    "補完候補を表示 (シェル補完用)",
+			ShowRecentUsageHistory:      "最近の使用履歴を表示",
+			AddCurrentDirectoryToConfig: "現在のディレクトリを設定に追加",
+			Examples:                    "例:",
+			NavigateToFirstDest:         "# 1番目のディレクトリに移動",
+			NavigateToHomeDest:          "# 'Home' ディレクトリに移動",
+			NavigateUsingShortcut:       "# ショートカット 'h' を使用して移動",
+			ShowInteractiveMenuExample:  "# インタラクティブメニューを表示",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  ディレクトリが選択されていないか、操作がキャンセルされました。",
@@ -198,7 +202,7 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 可用目录:",
-			AddCurrentDirectory:   "➕ [+] 添加当前目录",
+			AddCurrentDirectory:   "🌱 [+] 添加当前目录",
 			EnterChoice:           "请输入编号、快捷键、标签名称或 [+] 添加当前目录:",
 			EnterChoicePrompt:     "输入编号、快捷键、标签名称或 [+]:",
 
@@ -215,6 +219,7 @@ func getMessages(lang Language) Messages {
 			EnterShortcut:         "请输入快捷键:",
 			EnterShortcutOptional: "请输入快捷键（可选，按Enter跳过）:",
 			LabelCannotBeEmpty:    "❌ 标签不能为空。",
+			ShortcutAlreadyExists: "❌ 快捷键 '%s' 已存在。请输入不同的快捷键:",
 			Added:                 "✅ 已添加:",
 			Shortcut:              "🔑 快捷键:",
 
@@ -245,22 +250,23 @@ func getMessages(lang Language) Messages {
 			CommandCompleted: "✅ 命令已完成。当前目录:",
 
 			// Help messages
-			NavigateDirectoriesQuickly: "🚀 goto - 快速导航目录",
-			ConfigurationFile:          "配置文件:",
-			Usage:                      "用法:",
-			ShowInteractiveMenu:        "显示交互式菜单",
-			GoToDestinationByNumber:    "通过编号转到目录 (例: goto 1)",
-			GoToDestinationByLabel:     "通过标签名转到目录",
-			GoToDestinationByShortcut:  "通过快捷键转到目录",
-			ShowHelpMessage:            "显示此帮助消息",
-			ShowVersionInfo:            "显示版本信息",
-			ShowCompletionCandidates:   "显示补全候选 (用于Shell补全)",
-			ShowRecentUsageHistory:     "显示最近使用历史",
-			Examples:                   "示例:",
-			NavigateToFirstDest:        "# 导航到第1个目录",
-			NavigateToHomeDest:         "# 导航到 'Home' 目录",
-			NavigateUsingShortcut:      "# 使用快捷键 'h' 导航",
-			ShowInteractiveMenuExample: "# 显示交互式菜单",
+			NavigateDirectoriesQuickly:  "🚀 goto - 快速导航目录",
+			ConfigurationFile:           "配置文件:",
+			Usage:                       "用法:",
+			ShowInteractiveMenu:         "显示交互式菜单",
+			GoToDestinationByNumber:     "通过编号转到目录 (例: goto 1)",
+			GoToDestinationByLabel:      "通过标签名转到目录",
+			GoToDestinationByShortcut:   "通过快捷键转到目录",
+			ShowHelpMessage:             "显示此帮助消息",
+			ShowVersionInfo:             "显示版本信息",
+			ShowCompletionCandidates:    "显示补全候选 (用于Shell补全)",
+			ShowRecentUsageHistory:      "显示最近使用历史",
+			AddCurrentDirectoryToConfig: "将当前目录添加到配置",
+			Examples:                    "示例:",
+			NavigateToFirstDest:         "# 导航到第1个目录",
+			NavigateToHomeDest:          "# 导航到 'Home' 目录",
+			NavigateUsingShortcut:       "# 使用快捷键 'h' 导航",
+			ShowInteractiveMenuExample:  "# 显示交互式菜单",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  未选择目录或操作已取消。",
@@ -270,7 +276,7 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 사용 가능한 디렉토리:",
-			AddCurrentDirectory:   "➕ [+] 현재 디렉토리 추가",
+			AddCurrentDirectory:   "🌱 [+] 현재 디렉토리 추가",
 			EnterChoice:           "번호, 단축키, 라벨명 또는 [+]를 입력하세요:",
 			EnterChoicePrompt:     "번호, 단축키, 라벨명 또는 [+] 입력:",
 
@@ -287,6 +293,7 @@ func getMessages(lang Language) Messages {
 			EnterShortcut:         "단축키를 입력하세요:",
 			EnterShortcutOptional: "단축키를 입력하세요 (선택사항, Enter로 건너뛰기):",
 			LabelCannotBeEmpty:    "❌ 라벨은 비워둘 수 없습니다.",
+			ShortcutAlreadyExists: "❌ 단축키 '%s'는 이미 존재합니다. 다른 단축키를 입력하세요:",
 			Added:                 "✅ 추가되었습니다:",
 			Shortcut:              "🔑 단축키:",
 
@@ -317,22 +324,23 @@ func getMessages(lang Language) Messages {
 			CommandCompleted: "✅ 명령이 완료되었습니다. 현재 디렉토리:",
 
 			// Help messages
-			NavigateDirectoriesQuickly: "🚀 goto - 디렉토리 빠른 탐색",
-			ConfigurationFile:          "설정 파일:",
-			Usage:                      "사용법:",
-			ShowInteractiveMenu:        "대화형 메뉴 표시",
-			GoToDestinationByNumber:    "번호로 디렉토리 이동 (예: goto 1)",
-			GoToDestinationByLabel:     "라벨명으로 디렉토리 이동",
-			GoToDestinationByShortcut:  "단축키로 디렉토리 이동",
-			ShowHelpMessage:            "이 도움말 메시지 표시",
-			ShowVersionInfo:            "버전 정보 표시",
-			ShowCompletionCandidates:   "완성 후보 표시 (셸 완성용)",
-			ShowRecentUsageHistory:     "최근 사용 기록 표시",
-			Examples:                   "예제:",
-			NavigateToFirstDest:        "# 첫 번째 디렉토리로 이동",
-			NavigateToHomeDest:         "# 'Home' 디렉토리로 이동",
-			NavigateUsingShortcut:      "# 단축키 'h' 사용하여 이동",
-			ShowInteractiveMenuExample: "# 대화형 메뉴 표시",
+			NavigateDirectoriesQuickly:  "🚀 goto - 디렉토리 빠른 탐색",
+			ConfigurationFile:           "설정 파일:",
+			Usage:                       "사용법:",
+			ShowInteractiveMenu:         "대화형 메뉴 표시",
+			GoToDestinationByNumber:     "번호로 디렉토리 이동 (예: goto 1)",
+			GoToDestinationByLabel:      "라벨명으로 디렉토리 이동",
+			GoToDestinationByShortcut:   "단축키로 디렉토리 이동",
+			ShowHelpMessage:             "이 도움말 메시지 표시",
+			ShowVersionInfo:             "버전 정보 표시",
+			ShowCompletionCandidates:    "완성 후보 표시 (셸 완성용)",
+			ShowRecentUsageHistory:      "최근 사용 기록 표시",
+			AddCurrentDirectoryToConfig: "현재 디렉토리를 설정에 추가",
+			Examples:                    "예제:",
+			NavigateToFirstDest:         "# 첫 번째 디렉토리로 이동",
+			NavigateToHomeDest:          "# 'Home' 디렉토리로 이동",
+			NavigateUsingShortcut:       "# 단축키 'h' 사용하여 이동",
+			ShowInteractiveMenuExample:  "# 대화형 메뉴 표시",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  디렉토리가 선택되지 않았거나 작업이 취소되었습니다.",
@@ -342,7 +350,7 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 Destinos disponibles:",
-			AddCurrentDirectory:   "[+] Agregar directorio actual",
+			AddCurrentDirectory:   "🌱 [+] Agregar directorio actual",
 			EnterChoice:           "Ingrese número, tecla de acceso rápido, nombre de etiqueta o [+]:",
 			EnterChoicePrompt:     "Destino:",
 
@@ -359,6 +367,7 @@ func getMessages(lang Language) Messages {
 			EnterShortcut:         "Ingrese una tecla de acceso rápido:",
 			EnterShortcutOptional: "Ingrese una tecla de acceso rápido (opcional, presione Enter para omitir):",
 			LabelCannotBeEmpty:    "❌ La etiqueta no puede estar vacía.",
+			ShortcutAlreadyExists: "❌ El acceso rápido '%s' ya existe. Ingrese un acceso rápido diferente:",
 			Added:                 "✅ Agregado:",
 			Shortcut:              "🔑 Acceso rápido:",
 
@@ -389,22 +398,23 @@ func getMessages(lang Language) Messages {
 			CommandCompleted: "✅ Comando completado. Ahora está en:",
 
 			// Help messages
-			NavigateDirectoriesQuickly: "🚀 goto - Navegar directorios rápidamente",
-			ConfigurationFile:          "Archivo de configuración:",
-			Usage:                      "Uso:",
-			ShowInteractiveMenu:        "Mostrar menú interactivo",
-			GoToDestinationByNumber:    "Ir al destino por número (ej., goto 1)",
-			GoToDestinationByLabel:     "Ir al destino por nombre de etiqueta",
-			GoToDestinationByShortcut:  "Ir al destino por tecla de acceso rápido",
-			ShowHelpMessage:            "Mostrar este mensaje de ayuda",
-			ShowVersionInfo:            "Mostrar información de versión",
-			ShowCompletionCandidates:   "Mostrar candidatos de completado (para completado de shell)",
-			ShowRecentUsageHistory:     "Mostrar historial de uso reciente",
-			Examples:                   "Ejemplos:",
-			NavigateToFirstDest:        "# Navegar al 1er destino",
-			NavigateToHomeDest:         "# Navegar al destino 'Home'",
-			NavigateUsingShortcut:      "# Navegar usando acceso rápido 'h'",
-			ShowInteractiveMenuExample: "# Mostrar menú interactivo",
+			NavigateDirectoriesQuickly:  "🚀 goto - Navegar directorios rápidamente",
+			ConfigurationFile:           "Archivo de configuración:",
+			Usage:                       "Uso:",
+			ShowInteractiveMenu:         "Mostrar menú interactivo",
+			GoToDestinationByNumber:     "Ir al destino por número (ej., goto 1)",
+			GoToDestinationByLabel:      "Ir al destino por nombre de etiqueta",
+			GoToDestinationByShortcut:   "Ir al destino por tecla de acceso rápido",
+			ShowHelpMessage:             "Mostrar este mensaje de ayuda",
+			ShowVersionInfo:             "Mostrar información de versión",
+			ShowCompletionCandidates:    "Mostrar candidatos de completado (para completado de shell)",
+			ShowRecentUsageHistory:      "Mostrar historial de uso reciente",
+			AddCurrentDirectoryToConfig: "Agregar directorio actual a la configuración",
+			Examples:                    "Ejemplos:",
+			NavigateToFirstDest:         "# Navegar al 1er destino",
+			NavigateToHomeDest:          "# Navegar al destino 'Home'",
+			NavigateUsingShortcut:       "# Navegar usando acceso rápido 'h'",
+			ShowInteractiveMenuExample:  "# Mostrar menú interactivo",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No se seleccionó directorio o la operación fue cancelada.",
@@ -414,7 +424,7 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 Available destinations:",
-			AddCurrentDirectory:   "➕ [+] Add current directory",
+			AddCurrentDirectory:   "🌱 [+] Add current directory",
 			EnterChoice:           "Please enter the number, shortcut key, label name, or [+]:",
 			EnterChoicePrompt:     "Enter choice:",
 
@@ -431,6 +441,7 @@ func getMessages(lang Language) Messages {
 			EnterShortcut:         "Enter a shortcut key:",
 			EnterShortcutOptional: "Enter a shortcut key (optional, press Enter to skip):",
 			LabelCannotBeEmpty:    "❌ Label cannot be empty.",
+			ShortcutAlreadyExists: "❌ Shortcut '%s' already exists. Please enter a different shortcut:",
 			Added:                 "✅ Added:",
 			Shortcut:              "🔑 Shortcut:",
 
@@ -461,22 +472,23 @@ func getMessages(lang Language) Messages {
 			CommandCompleted: "✅ Command completed. You are now in:",
 
 			// Help messages
-			NavigateDirectoriesQuickly: "🚀 goto - Navigate directories quickly",
-			ConfigurationFile:          "Configuration file:",
-			Usage:                      "Usage:",
-			ShowInteractiveMenu:        "Show interactive menu",
-			GoToDestinationByNumber:    "Go to destination by number (e.g., goto 1)",
-			GoToDestinationByLabel:     "Go to destination by label name",
-			GoToDestinationByShortcut:  "Go to destination by shortcut key",
-			ShowHelpMessage:            "Show this help message",
-			ShowVersionInfo:            "Show version information",
-			ShowCompletionCandidates:   "Show completion candidates (for shell completion)",
-			ShowRecentUsageHistory:     "Show recent usage history",
-			Examples:                   "Examples:",
-			NavigateToFirstDest:        "# Navigate to 1st destination",
-			NavigateToHomeDest:         "# Navigate to 'Home' destination",
-			NavigateUsingShortcut:      "# Navigate using shortcut 'h'",
-			ShowInteractiveMenuExample: "# Show interactive menu",
+			NavigateDirectoriesQuickly:  "🚀 goto - Navigate directories quickly",
+			ConfigurationFile:           "Configuration file:",
+			Usage:                       "Usage:",
+			ShowInteractiveMenu:         "Show interactive menu",
+			GoToDestinationByNumber:     "Go to destination by number (e.g., goto 1)",
+			GoToDestinationByLabel:      "Go to destination by label name",
+			GoToDestinationByShortcut:   "Go to destination by shortcut key",
+			ShowHelpMessage:             "Show this help message",
+			ShowVersionInfo:             "Show version information",
+			ShowCompletionCandidates:    "Show completion candidates (for shell completion)",
+			ShowRecentUsageHistory:      "Show recent usage history",
+			AddCurrentDirectoryToConfig: "Add current directory to configuration",
+			Examples:                    "Examples:",
+			NavigateToFirstDest:         "# Navigate to 1st destination",
+			NavigateToHomeDest:          "# Navigate to 'Home' destination",
+			NavigateUsingShortcut:       "# Navigate using shortcut 'h'",
+			ShowInteractiveMenuExample:  "# Show interactive menu",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No directory selected or operation cancelled.",

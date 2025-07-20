@@ -78,16 +78,16 @@ make
 
 ### Add to PATH
 
-Add the `goto/go` directory to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
+After building, add the compiled `goto` executable to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
 
 ```sh
-export PATH="$PATH:/path/to/goto/go"
+export PATH="$PATH:/path/to/goto"
 ```
 
 For example, if you cloned to your home directory:
 
 ```sh
-export PATH="$PATH:$HOME/goto/go"
+export PATH="$PATH:$HOME/goto"
 ```
 
 After adding to PATH, reload your shell configuration:
@@ -210,9 +210,14 @@ goto 1<TAB>       # Shows destinations with numbers starting with '1'
 
 ## Configuration
 
-### Config file - `~/.goto.toml`
+### Config Files
 
-The `goto` command uses a TOML configuration file located at `~/.goto.toml`. When you first run `goto`, it will automatically create a default configuration file with sample destinations.
+The `goto` command uses the following configuration files:
+
+- **`~/.goto.toml`**: Main configuration file containing your destinations
+- **`~/.goto.history.json`**: History data storing your recent usage information
+
+When you first run `goto`, it will automatically create a default configuration file with sample destinations.
 
 Example configuration:
 
@@ -374,25 +379,21 @@ Example output:
 
 #### History Storage
 
-Usage history is stored in your `~/.goto.toml` file in the following format:
+Usage history is stored in your `~/.goto.history.json` file in the following format:
 
-```toml
-[[history]]
-  label = "Home"
-  last_used = "2025-07-18T16:08:38+09:00"
-
-[[history]]
-  label = "Desktop"
-  last_used = "2025-07-18T16:04:40+09:00"
-
-# ... your destinations ...
-[Home]
-path = "~/"
-shortcut = "h"
-
-[Desktop]
-path = "~/Desktop"
-shortcut = "d"
+```json
+{
+  "entries": [
+    {
+      "label": "Home",
+      "last_used": "2025-07-18T16:08:38+09:00"
+    },
+    {
+      "label": "Desktop",
+      "last_used": "2025-07-18T16:04:40+09:00"
+    }
+  ]
+}
 ```
 
 This intelligent ordering ensures that your most frequently used directories are always easily accessible.

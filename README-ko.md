@@ -76,16 +76,16 @@ make
 
 ### PATH에 추가
 
-셸 구성 파일(`.bashrc`, `.zshrc` 등)에 다음 줄을 추가하여 `goto/go` 디렉토리를 PATH에 추가하세요:
+셸 구성 파일(`.bashrc`, `.zshrc` 등)에 다음 줄을 추가하여 빌드된 `goto` 실행 파일을 PATH에 추가하세요:
 
 ```sh
-export PATH="$PATH:/path/to/goto/go"
+export PATH="$PATH:/path/to/goto"
 ```
 
 예를 들어, 홈 디렉토리에 클론한 경우:
 
 ```sh
-export PATH="$PATH:$HOME/goto/go"
+export PATH="$PATH:$HOME/goto"
 ```
 
 PATH에 추가한 후 셸 구성을 다시 로드하세요:

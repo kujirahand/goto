@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,8 +12,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/BurntSushi/toml"
+	"golang.org/x/term"
 )
 
 // Destination represents a goto destination
@@ -37,6 +40,20 @@ type ConfigWithHistory struct {
 // Config represents the TOML configuration
 type Config map[string]Destination
 
+// History represents the JSON history data
+type History struct {
+	Entries []HistoryEntry `json:"entries"`
+}
+
+// Get history file path
+func getHistoryFilePath() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(usr.HomeDir, ".goto.history.json"), nil
+}
+
 func main() {
 	// Initialize language support
 	currentLanguage = detectLanguage()
@@ -50,17 +67,35 @@ func main() {
 	}
 
 	tomlFile := filepath.Join(usr.HomeDir, ".goto.toml")
+	historyFile, err := getHistoryFilePath()
+	if err != nil {
+		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
+		os.Exit(1)
+	}
 
 	// Create default config if it doesn't exist
 	if _, err := os.Stat(tomlFile); os.IsNotExist(err) {
 		createDefaultConfig(tomlFile)
 	}
 
-	// Load configuration with history for sorting
-	configWithHistory, err := loadConfigWithHistory(tomlFile)
+	// Load configuration
+	config, err := loadConfig(tomlFile)
 	if err != nil {
 		fmt.Printf("%s %v\n", messages.ErrorReadingConfig, err)
 		os.Exit(1)
+	}
+
+	// Load history
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If history file doesn't exist or has an error, create an empty history
+		history = History{Entries: []HistoryEntry{}}
+	}
+
+	// Create ConfigWithHistory for backward compatibility
+	configWithHistory := ConfigWithHistory{
+		Destinations: config,
+		History:      history.Entries,
 	}
 
 	// Get entries sorted by history and shortcuts
@@ -98,6 +133,16 @@ func main() {
 		if arg == "--history" {
 			showHistory(configWithHistory)
 			os.Exit(0)
+		}
+
+		// Handle add option
+		if arg == "--add" {
+			success := addCurrentPathToConfig(tomlFile)
+			if success {
+				os.Exit(0)
+			} else {
+				os.Exit(1)
+			}
 		}
 
 		// Find destination by argument
@@ -180,6 +225,46 @@ func createDefaultConfig(tomlFile string) {
 		os.Exit(1)
 	}
 	fmt.Printf("%s %s\n", messages.CreatedDefaultConfig, tomlFile)
+}
+
+func loadConfig(tomlFile string) (map[string]Destination, error) {
+	var config map[string]Destination
+	_, err := toml.DecodeFile(tomlFile, &config)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func loadHistory(historyFile string) (History, error) {
+	var history History
+
+	// Check if history file exists
+	if _, err := os.Stat(historyFile); os.IsNotExist(err) {
+		return History{Entries: []HistoryEntry{}}, nil
+	}
+
+	// Read and parse history file
+	data, err := os.ReadFile(historyFile)
+	if err != nil {
+		return History{Entries: []HistoryEntry{}}, err
+	}
+
+	err = json.Unmarshal(data, &history)
+	if err != nil {
+		return History{Entries: []HistoryEntry{}}, err
+	}
+
+	return history, nil
+}
+
+func saveHistory(historyFile string, history History) error {
+	data, err := json.MarshalIndent(history, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(historyFile, data, 0644)
 }
 
 func loadConfigWithHistory(tomlFile string) (ConfigWithHistory, error) {
@@ -316,33 +401,40 @@ func saveConfigWithHistory(tomlFile string, config ConfigWithHistory) error {
 }
 
 func updateHistory(tomlFile string, label string) error {
-	// Load current config with history
-	config, err := loadConfigWithHistory(tomlFile)
+	// Get history file path
+	historyFile, err := getHistoryFilePath()
 	if err != nil {
 		return err
+	}
+
+	// Load history
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If error loading history, create a new one
+		history = History{Entries: []HistoryEntry{}}
 	}
 
 	// Update or add history entry
 	now := time.Now()
 	found := false
 
-	for i, hist := range config.History {
+	for i, hist := range history.Entries {
 		if hist.Label == label {
-			config.History[i].LastUsed = now
+			history.Entries[i].LastUsed = now
 			found = true
 			break
 		}
 	}
 
 	if !found {
-		config.History = append(config.History, HistoryEntry{
+		history.Entries = append(history.Entries, HistoryEntry{
 			Label:    label,
 			LastUsed: now,
 		})
 	}
 
-	// Save updated config
-	return saveConfigWithHistory(tomlFile, config)
+	// Save updated history
+	return saveHistory(historyFile, history)
 }
 
 func buildShortcutMap(entries []Entry) map[string]int {
@@ -366,62 +458,269 @@ func expandPath(path string) string {
 	return path
 }
 
+// パスの途中を省略して...で表示する
+func shortenPathMiddle(path string, maxLen int) string {
+	r := []rune(path)
+	if len(r) <= maxLen {
+		return path
+	}
+	// 先頭3文字 + ... + 末尾(maxLen-6)文字
+	keep := maxLen - 3
+	if keep < 6 {
+		// 省略しすぎないように
+		return string(r[:maxLen])
+	}
+	head := keep / 2
+	tail := keep - head
+	return string(r[:head]) + "..." + string(r[len(r)-tail:])
+}
+
+// PrintWhiteBackgroundLine prints a line with white background
+func PrintWhiteBackgroundLine(text string) {
+	// ターミナル横幅取得
+	termWidth := 80
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
+		termWidth = w
+	}
+
+	// 一行全部を白背景にして表示
+	BOW := "\033[47;30m"
+	EOW := "\033[0m"
+	fmt.Printf(
+		"%s%-*s%s\n",
+		BOW,
+		termWidth-utf8.RuneCountInString(text),
+		text,
+		EOW,
+	)
+}
+
 func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string) (string, string, string) {
-	fmt.Println(messages.AvailableDestinations)
-	for i, entry := range entries {
-		expandedPath := expandPath(entry.Path)
-		shortcutStr := ""
-		if entry.Shortcut != "" {
-			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-		}
-		fmt.Printf("%d. %s → %s%s\n", i+1, entry.Label, expandedPath, shortcutStr)
+	// ターミナル横幅取得
+	termWidth := 80
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
+		termWidth = w
 	}
 
-	fmt.Printf("\n%s\n", messages.AddCurrentDirectory)
-	fmt.Printf("\n%s\n", messages.EnterChoice)
+	// 初期表示
+	PrintWhiteBackgroundLine(messages.AvailableDestinations)
 
-	fmt.Printf("%s ", messages.EnterChoicePrompt)
-	reader := bufio.NewReader(os.Stdin)
-	choice, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Printf("\n%s\n", messages.OperationCancelled)
-		return "", "", ""
+	// 桁数を計算
+	numWidth := 1
+	if len(entries) >= 10 {
+		numWidth = len(fmt.Sprintf("%d", len(entries)))
 	}
 
-	choice = strings.TrimSpace(choice)
-
-	// Check if user wants to add current directory
-	if choice == "+" {
-		return "ADD_CURRENT", "", ""
-	}
-
-	// Determine input type and get corresponding entry
-	index := 0
-
-	// Check if it's a number
-	if num, err := strconv.Atoi(choice); err == nil {
-		index = num
-	} else if shortcutIndex, exists := shortcutMap[choice]; exists {
-		// Check if it's a shortcut
-		index = shortcutIndex
-	} else {
-		// Check if it's a label name (case-insensitive)
+	displayEntries := func(selectedIndex int, cursorMode bool) {
 		for i, entry := range entries {
-			if strings.EqualFold(entry.Label, choice) {
-				index = i + 1
-				break
+			expandedPath := expandPath(entry.Path)
+			shortcutStr := ""
+			if entry.Shortcut != "" {
+				shortcutStr = fmt.Sprintf("(%s)", entry.Shortcut)
+			}
+			// 右寄せで桁揃え
+			prefix := fmt.Sprintf("[%*d]%s %s → ", numWidth, i+1, shortcutStr, entry.Label)
+			maxPathLen := termWidth - len([]rune(prefix))
+			pathStr := expandedPath
+			if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
+				pathStr = shortenPathMiddle(expandedPath, maxPathLen)
+			}
+
+			// カーソルモードの場合、選択中の項目をハイライト
+			if cursorMode && i == selectedIndex {
+				fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
+			} else {
+				fmt.Printf("%s%s\n", prefix, pathStr)
 			}
 		}
 	}
 
-	if index >= 1 && index <= len(entries) {
-		entry := entries[index-1]
-		expandedPath := expandPath(entry.Path)
-		return expandedPath, entry.Command, entry.Label
-	}
+	// カーソル選択モードかどうかを判定
+	selectedIndex := 0
+	cursorMode := true // デフォルトでカーソルモードを有効にする
+	inputBuffer := ""  // 複数文字入力用のバッファ
 
-	fmt.Println(messages.InvalidInput)
-	return "", "", ""
+	// 初期表示（カーソルモードで開始）
+	displayEntries(selectedIndex, true)
+	fmt.Printf("%s\n", messages.AddCurrentDirectory)
+	fmt.Printf("💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに切り替え\n")
+
+	for {
+		if !cursorMode {
+			// 通常の入力モード表示
+			displayEntries(selectedIndex, false)
+			fmt.Printf("%s\n", messages.AddCurrentDirectory)
+			fmt.Printf("%s\n", messages.EnterChoice)
+			fmt.Printf("💡 ヒント: Enterキーのみでカーソル移動モードに戻る\n")
+			fmt.Printf("%s ", messages.EnterChoicePrompt)
+
+			// 通常の入力モード
+			reader := bufio.NewReader(os.Stdin)
+			choice, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("\n%s\n", messages.OperationCancelled)
+				return "", "", ""
+			}
+
+			choice = strings.TrimSpace(choice)
+
+			// 空の入力の場合、カーソルモードに切り替え
+			if choice == "" {
+				cursorMode = true
+				// 画面をクリア
+				fmt.Print("\033[2J\033[H")
+				PrintWhiteBackgroundLine(messages.AvailableDestinations)
+				displayEntries(selectedIndex, true)
+				fmt.Printf("%s\n", messages.AddCurrentDirectory)
+				fmt.Printf("💡 ↑↓キーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る\n")
+				continue
+			}
+
+			// Check if user wants to add current directory
+			if choice == "+" {
+				return "ADD_CURRENT", "", ""
+			}
+
+			// Determine input type and get corresponding entry
+			index := 0
+
+			// Check if it's a number
+			if num, err := strconv.Atoi(choice); err == nil {
+				index = num
+			} else if shortcutIndex, exists := shortcutMap[choice]; exists {
+				// Check if it's a shortcut
+				index = shortcutIndex
+			} else {
+				// Check if it's a label name (case-insensitive)
+				for i, entry := range entries {
+					if strings.EqualFold(entry.Label, choice) {
+						index = i + 1
+						break
+					}
+				}
+			}
+
+			if index >= 1 && index <= len(entries) {
+				entry := entries[index-1]
+				expandedPath := expandPath(entry.Path)
+				return expandedPath, entry.Command, entry.Label
+			}
+
+			fmt.Println(messages.InvalidInput)
+			continue
+		} else {
+			// カーソルモード
+			// Raw modeで入力を読み取り
+			oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+			if err != nil {
+				fmt.Printf("Error entering raw mode: %v\n", err)
+				return "", "", ""
+			}
+
+			buffer := make([]byte, 4)
+			n, err := os.Stdin.Read(buffer)
+			term.Restore(int(os.Stdin.Fd()), oldState)
+
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				return "", "", ""
+			}
+
+			redraw := false
+
+			// キー入力を解析
+			if n == 1 {
+				switch buffer[0] {
+				case 13: // Enter
+					entry := entries[selectedIndex]
+					expandedPath := expandPath(entry.Path)
+					return expandedPath, entry.Command, entry.Label
+				case 27: // Escape
+					cursorMode = false
+					inputBuffer = ""           // バッファをクリア
+					fmt.Print("\033[2J\033[H") // 画面クリア
+					PrintWhiteBackgroundLine(messages.AvailableDestinations)
+					continue
+				case '+':
+					return "ADD_CURRENT", "", ""
+				case 'j': // j キーで下移動 (Vim風)
+					inputBuffer = "" // バッファをクリア
+					if selectedIndex < len(entries)-1 {
+						selectedIndex++
+						redraw = true
+					}
+				case 'k': // k キーで上移動 (Vim風)
+					inputBuffer = "" // バッファをクリア
+					if selectedIndex > 0 {
+						selectedIndex--
+						redraw = true
+					}
+				default:
+					// 数字キー (0-9) またはアルファベットキーの場合
+					if (buffer[0] >= '0' && buffer[0] <= '9') || (buffer[0] >= 'a' && buffer[0] <= 'z') || (buffer[0] >= 'A' && buffer[0] <= 'Z') {
+						inputChar := string(buffer[0])
+
+						// j/k は上で処理済みなのでスキップ
+						if inputChar == "j" || inputChar == "k" {
+							break
+						}
+
+						// 数字の場合、バッファに追加
+						if buffer[0] >= '0' && buffer[0] <= '9' {
+							inputBuffer += inputChar
+							// 入力された数字が有効な範囲内かチェック
+							if num, err := strconv.Atoi(inputBuffer); err == nil {
+								if num >= 1 && num <= len(entries) {
+									// 有効な番号の場合、少し待ってから決定
+									entry := entries[num-1]
+									expandedPath := expandPath(entry.Path)
+									return expandedPath, entry.Command, entry.Label
+								} else if num > len(entries) {
+									// 範囲外の場合、バッファをクリア
+									inputBuffer = ""
+								}
+							}
+						} else {
+							// ショートカットキーの場合、バッファをクリアして即座に実行
+							inputBuffer = ""
+							if shortcutIndex, exists := shortcutMap[inputChar]; exists {
+								entry := entries[shortcutIndex-1]
+								expandedPath := expandPath(entry.Path)
+								return expandedPath, entry.Command, entry.Label
+							}
+						}
+					} else {
+						// その他のキーが押された場合、バッファをクリア
+						inputBuffer = ""
+					}
+				}
+			} else if n >= 3 && buffer[0] == 27 && buffer[1] == '[' {
+				switch buffer[2] {
+				case 'A': // Up arrow
+					inputBuffer = "" // バッファをクリア
+					if selectedIndex > 0 {
+						selectedIndex--
+						redraw = true
+					}
+				case 'B': // Down arrow
+					inputBuffer = "" // バッファをクリア
+					if selectedIndex < len(entries)-1 {
+						selectedIndex++
+						redraw = true
+					}
+				}
+			}
+
+			// 画面の再描画
+			if redraw {
+				// カーソルを最初の行に移動
+				fmt.Printf("\033[%dA", len(entries)+2)
+				displayEntries(selectedIndex, true)
+				fmt.Printf("%s\n", messages.AddCurrentDirectory)
+				fmt.Printf("💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る\n")
+			}
+		}
+	}
 }
 
 func openNewShell(targetDir, command, label string) bool {
@@ -534,6 +833,16 @@ func addCurrentPathToConfig(tomlFile string) bool {
 
 	fmt.Printf("%s %s\n", messages.CurrentDirectory, currentDir)
 
+	// 既存の設定を読み込んでショートカットマップを作成
+	configWithHistory, err := loadConfigWithHistory(tomlFile)
+	if err != nil {
+		fmt.Printf("%s %v\n", messages.ErrorReadingConfig, err)
+		return false
+	}
+
+	entries := getEntriesWithHistory(configWithHistory)
+	shortcutMap := buildShortcutMap(entries)
+
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("%s ", messages.EnterLabel)
@@ -549,14 +858,31 @@ func addCurrentPathToConfig(tomlFile string) bool {
 		return false
 	}
 
-	fmt.Printf("%s ", messages.EnterShortcutOptional)
-	shortcut, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Printf("\n%s\n", messages.OperationCancelled)
-		return false
-	}
+	var shortcut string
+	for {
+		fmt.Printf("%s ", messages.EnterShortcutOptional)
+		shortcutInput, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\n%s\n", messages.OperationCancelled)
+			return false
+		}
 
-	shortcut = strings.TrimSpace(shortcut)
+		shortcut = strings.TrimSpace(shortcutInput)
+
+		// ショートカットが空の場合は問題なし
+		if shortcut == "" {
+			break
+		}
+
+		// 既存のショートカットと重複していないかチェック
+		if _, exists := shortcutMap[shortcut]; exists {
+			fmt.Printf(messages.ShortcutAlreadyExists, shortcut)
+			continue
+		}
+
+		// 重複していなければループを抜ける
+		break
+	}
 
 	// Generate TOML entry
 	tomlEntry := fmt.Sprintf("\n[%s]\n", label)
@@ -639,6 +965,7 @@ func showHelp() {
 	fmt.Printf("  goto -v, --version   %s\n", messages.ShowVersionInfo)
 	fmt.Printf("  goto --complete      %s\n", messages.ShowCompletionCandidates)
 	fmt.Printf("  goto --history       %s\n", messages.ShowRecentUsageHistory)
+	fmt.Printf("  goto --add           %s\n", messages.AddCurrentDirectoryToConfig)
 	fmt.Printf("\n%s\n", messages.Examples)
 	fmt.Printf("  goto 1              %s\n", messages.NavigateToFirstDest)
 	fmt.Printf("  goto Home           %s\n", messages.NavigateToHomeDest)
@@ -654,7 +981,25 @@ func showCompletions(entries []Entry) {
 }
 
 func showHistory(config ConfigWithHistory) {
-	if len(config.History) == 0 {
+	// Get history file path
+	historyFile, err := getHistoryFilePath()
+	if err != nil {
+		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
+		return
+	}
+
+	// Load history
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If there was an error loading history, try using the old format from config
+		if len(config.History) == 0 {
+			fmt.Println(messages.NoUsageHistoryFound)
+			return
+		}
+		history.Entries = config.History
+	}
+
+	if len(history.Entries) == 0 {
 		fmt.Println(messages.NoUsageHistoryFound)
 		return
 	}
@@ -663,8 +1008,8 @@ func showHistory(config ConfigWithHistory) {
 	fmt.Println(strings.Repeat("=", 50))
 
 	// Sort history by most recent first
-	sortedHistory := make([]HistoryEntry, len(config.History))
-	copy(sortedHistory, config.History)
+	sortedHistory := make([]HistoryEntry, len(history.Entries))
+	copy(sortedHistory, history.Entries)
 	sort.Slice(sortedHistory, func(i, j int) bool {
 		return sortedHistory[i].LastUsed.After(sortedHistory[j].LastUsed)
 	})

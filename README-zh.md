@@ -6,7 +6,17 @@
 
 ## 快速开始
 
-1. **下载** 从 [Releases](https://github.com/kujirahand/goto/releases) 下载适用于您平台的最新二进制文件
+1. **下载** 从通过将以下行添加到您的 shell 配置文件（`.bashrc`、`.zshrc` 等）来将构建的 `goto` 可执行文件添加到 PATH：
+
+```sh
+export PATH="$PATH:/path/to/goto"
+```
+
+例如，如果您克隆到了主目录：
+
+```sh
+export PATH="$PATH:$HOME/goto"
+```(https://github.com/kujirahand/goto/releases) 下载适用于您平台的最新二进制文件
 2. **设置执行权限** 并将其放在 PATH 中
 3. **运行** `goto` 查看交互式菜单
 
