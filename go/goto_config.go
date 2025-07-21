@@ -1,4 +1,4 @@
-// config_io.go - Configuration file I/O operations
+// goto_config.go - Configuration file I/O operations
 // This file contains functions for reading and writing configuration files,
 // including TOML configuration files and JSON history files.
 
@@ -11,7 +11,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -107,153 +106,40 @@ func saveHistory(historyFile string, history History) error {
 	return os.WriteFile(historyFile, data, 0644)
 }
 
-// loadConfigWithHistory loads TOML configuration including embedded history section (legacy)
-func loadConfigWithHistory(tomlFile string) (ConfigWithHistory, error) {
-	var rawConfig map[string]interface{}
-	_, err := toml.DecodeFile(tomlFile, &rawConfig)
-	if err != nil {
-		return ConfigWithHistory{}, err
-	}
-
-	config := ConfigWithHistory{
-		Destinations: make(map[string]Destination),
-		History:      []HistoryEntry{},
-	}
-
-	// Parse destinations
-	for key, value := range rawConfig {
-		if key == "history" {
-			// Parse history section
-			if historyData, ok := value.([]map[string]interface{}); ok {
-				for _, histItem := range historyData {
-					if label, ok := histItem["label"].(string); ok {
-						if lastUsedStr, ok := histItem["last_used"].(string); ok {
-							if lastUsed, err := time.Parse(time.RFC3339, lastUsedStr); err == nil {
-								config.History = append(config.History, HistoryEntry{
-									Label:    label,
-									LastUsed: lastUsed,
-								})
-							}
-						}
-					}
-				}
-			}
-		} else {
-			// Parse destination
-			if destData, ok := value.(map[string]interface{}); ok {
-				dest := Destination{}
-				if path, ok := destData["path"].(string); ok {
-					dest.Path = path
-				}
-				if shortcut, ok := destData["shortcut"].(string); ok {
-					dest.Shortcut = shortcut
-				}
-				if command, ok := destData["command"].(string); ok {
-					dest.Command = command
-				}
-				config.Destinations[key] = dest
-			}
-		}
-	}
-
-	return config, nil
-}
-
-func saveConfigWithHistory(tomlFile string, config ConfigWithHistory) error {
-	// Create a map that includes both destinations and history
-	configMap := make(map[string]interface{})
-
-	// Add destinations
-	for label, dest := range config.Destinations {
-		configMap[label] = dest
-	}
-
-	// Add history if it exists
-	if len(config.History) > 0 {
-		historyEntries := make([]map[string]interface{}, len(config.History))
-		for i, hist := range config.History {
-			historyEntries[i] = map[string]interface{}{
-				"label":     hist.Label,
-				"last_used": hist.LastUsed.Format(time.RFC3339),
-			}
-		}
-		configMap["history"] = historyEntries
-	}
-
-	// Convert to TOML
-	var buf strings.Builder
-	encoder := toml.NewEncoder(&buf)
-	err := encoder.Encode(configMap)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(tomlFile, []byte(buf.String()), 0644)
-}
-
-func updateHistory(tomlFile string, label string) error {
-	// Get history file path
-	historyFile, err := getHistoryFilePath()
-	if err != nil {
-		return err
-	}
-
-	// Load history
-	history, err := loadHistory(historyFile)
-	if err != nil {
-		// If error loading history, create a new one
-		history = History{Entries: []HistoryEntry{}}
-	}
-
-	// Update or add history entry
-	now := time.Now()
-	found := false
-
-	for i, hist := range history.Entries {
-		if hist.Label == label {
-			history.Entries[i].LastUsed = now
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		history.Entries = append(history.Entries, HistoryEntry{
-			Label:    label,
-			LastUsed: now,
-		})
-	}
-
-	// Save updated history
-	return saveHistory(historyFile, history)
-}
-
-func getEntriesWithHistory(config ConfigWithHistory) []Entry {
+// getEntriesFromConfig converts config map to sorted Entry slice
+func getEntriesFromConfig(config map[string]Destination, customHistoryFile string) []Entry {
 	var entries []Entry
 
-	// Load history from separate JSON file
-	historyFile, err := getHistoryFilePath()
-	if err != nil {
-		// If we can't get history file path, proceed without history sorting
-		for label, dest := range config.Destinations {
-			entries = append(entries, Entry{
-				Label:    label,
-				Path:     dest.Path,
-				Shortcut: dest.Shortcut,
-				Command:  dest.Command,
+	// Load history from separate JSON file for sorting
+	var historyFile string
+	var err error
+
+	if customHistoryFile != "" {
+		historyFile = customHistoryFile
+	} else {
+		historyFile, err = getHistoryFilePath()
+		if err != nil {
+			// If we can't get history file path, proceed without history sorting
+			for label, dest := range config {
+				entries = append(entries, Entry{
+					Label:    label,
+					Path:     dest.Path,
+					Shortcut: dest.Shortcut,
+					Command:  dest.Command,
+				})
+			}
+			// Sort alphabetically if no history available
+			sort.Slice(entries, func(i, j int) bool {
+				return entries[i].Label < entries[j].Label
 			})
+			return entries
 		}
-		// Sort alphabetically if no history available
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].Label < entries[j].Label
-		})
-		return entries
 	}
 
 	history, err := loadHistory(historyFile)
 	if err != nil {
 		// If history file doesn't exist or has error, proceed without history sorting
-		for label, dest := range config.Destinations {
+		for label, dest := range config {
 			entries = append(entries, Entry{
 				Label:    label,
 				Path:     dest.Path,
@@ -275,7 +161,7 @@ func getEntriesWithHistory(config ConfigWithHistory) []Entry {
 	}
 
 	// Collect all entries
-	for label, dest := range config.Destinations {
+	for label, dest := range config {
 		entries = append(entries, Entry{
 			Label:    label,
 			Path:     dest.Path,
@@ -307,4 +193,48 @@ func getEntriesWithHistory(config ConfigWithHistory) []Entry {
 	})
 
 	return entries
+}
+
+func updateHistory(tomlFile string, label string, customHistoryFile string) error {
+	// Get history file path
+	var historyFile string
+	var err error
+
+	if customHistoryFile != "" {
+		historyFile = customHistoryFile
+	} else {
+		historyFile, err = getHistoryFilePath()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Load history
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If error loading history, create a new one
+		history = History{Entries: []HistoryEntry{}}
+	}
+
+	// Update or add history entry
+	now := time.Now()
+	found := false
+
+	for i, hist := range history.Entries {
+		if hist.Label == label {
+			history.Entries[i].LastUsed = now
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		history.Entries = append(history.Entries, HistoryEntry{
+			Label:    label,
+			LastUsed: now,
+		})
+	}
+
+	// Save updated history
+	return saveHistory(historyFile, history)
 }

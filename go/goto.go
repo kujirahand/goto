@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -29,14 +28,8 @@ type Destination struct {
 
 // HistoryEntry represents a history entry with timestamp
 type HistoryEntry struct {
-	Label    string    `toml:"label"`
-	LastUsed time.Time `toml:"last_used"`
-}
-
-// ConfigWithHistory represents the TOML configuration with history
-type ConfigWithHistory struct {
-	Destinations map[string]Destination `toml:",inline"`
-	History      []HistoryEntry         `toml:"history"`
+	Label    string    `json:"label"`
+	LastUsed time.Time `json:"last_used"`
 }
 
 // Config represents the TOML configuration
@@ -52,6 +45,11 @@ func main() {
 	currentLanguage = detectLanguage()
 	messages = getMessages(currentLanguage)
 
+	// Parse command line arguments for config and history file options
+	var customConfigFile string
+	var customHistoryFile string
+	var interactiveMode string = "auto" // auto, cursor, label
+
 	// Get configuration file path
 	usr, err := user.Current()
 	if err != nil {
@@ -60,10 +58,31 @@ func main() {
 	}
 
 	tomlFile := filepath.Join(usr.HomeDir, ".goto.toml")
-	historyFile, err := getHistoryFilePath()
-	if err != nil {
-		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
-		os.Exit(1)
+
+	// Handle command line arguments
+	if len(os.Args) > 1 {
+		// Check for config and history file options first
+		args := os.Args[1:]
+		filteredArgs := []string{}
+
+		for i := 0; i < len(args); i++ {
+			arg := args[i]
+
+			if arg == "--config" && i+1 < len(args) {
+				customConfigFile = args[i+1]
+				i++ // Skip the next argument as it's the file path
+			} else if arg == "--history-file" && i+1 < len(args) {
+				customHistoryFile = args[i+1]
+				i++ // Skip the next argument as it's the file path
+			} else {
+				filteredArgs = append(filteredArgs, arg)
+			}
+		}
+
+		// Use custom config file if specified
+		if customConfigFile != "" {
+			tomlFile = customConfigFile
+		}
 	}
 
 	// Create default config if it doesn't exist
@@ -81,21 +100,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Load history
-	history, err := loadHistory(historyFile)
-	if err != nil {
-		// If history file doesn't exist or has an error, create an empty history
-		history = History{Entries: []HistoryEntry{}}
-	}
-
-	// Create ConfigWithHistory for backward compatibility
-	configWithHistory := ConfigWithHistory{
-		Destinations: config,
-		History:      history.Entries,
-	}
-
 	// Get entries sorted by history and shortcuts
-	entries := getEntriesWithHistory(configWithHistory)
+	entries := getEntriesFromConfig(config, customHistoryFile)
 	shortcutMap := buildShortcutMap(entries)
 
 	if len(entries) == 0 {
@@ -103,9 +109,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Handle command line arguments
+	// Handle remaining command line arguments
 	if len(os.Args) > 1 {
-		arg := os.Args[1]
+		// Use filtered args if config/history options were processed
+		args := os.Args[1:]
+		if customConfigFile != "" || customHistoryFile != "" {
+			// Re-filter args to skip --config and --history-file options
+			filteredArgs := []string{}
+			for i := 0; i < len(args); i++ {
+				arg := args[i]
+				if arg == "--config" && i+1 < len(args) {
+					i++ // Skip the next argument
+				} else if arg == "--history-file" && i+1 < len(args) {
+					i++ // Skip the next argument
+				} else {
+					filteredArgs = append(filteredArgs, arg)
+				}
+			}
+			if len(filteredArgs) == 0 {
+				// No remaining arguments, go to interactive mode
+				goto interactive_mode
+			}
+			args = filteredArgs
+		}
+
+		arg := args[0]
 
 		// Handle help option
 		if arg == "-h" || arg == "--help" || arg == "help" {
@@ -127,55 +155,62 @@ func main() {
 
 		// Handle history option
 		if arg == "--history" {
-			showHistory(configWithHistory)
+			showHistory(customConfigFile, customHistoryFile)
 			os.Exit(0)
 		}
 
-		// Handle add option
-		if arg == "--add" {
+		// Handle cursor mode option
+		if arg == "-c" {
+			interactiveMode = "cursor"
+		} else if arg == "-l" {
+			// Handle label input mode option
+			interactiveMode = "label"
+		} else if arg == "--add" {
+			// Handle add option
 			success := addCurrentPathToConfig(tomlFile)
 			if success {
 				os.Exit(0)
 			} else {
 				os.Exit(1)
 			}
-		}
-
-		// Find destination by argument
-		targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
-
-		if targetDir == "" {
-			fmt.Printf(messages.DestinationNotFound, arg)
-			fmt.Println("\n📋 Available destinations:")
-			for _, entry := range entries {
-				shortcutStr := ""
-				if entry.Shortcut != "" {
-					shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-				}
-				expandedPath := expandPath(entry.Path)
-				fmt.Printf("  • %s%s → %s\n", entry.Label, shortcutStr, expandedPath)
-			}
-			os.Exit(1)
-		}
-
-		fmt.Printf("%s %s\n", messages.FoundDestination, label)
-		success := openNewShell(targetDir, command, label)
-		if success {
-			// Update history
-			if label != "" {
-				err := updateHistory(tomlFile, label)
-				if err != nil {
-					fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
-				}
-			}
-			os.Exit(0)
 		} else {
-			os.Exit(1)
+			// Find destination by argument
+			targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
+
+			if targetDir == "" {
+				fmt.Printf(messages.DestinationNotFound, arg)
+				fmt.Println("\n📋 Available destinations:")
+				for _, entry := range entries {
+					shortcutStr := ""
+					if entry.Shortcut != "" {
+						shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+					}
+					expandedPath := expandPath(entry.Path)
+					fmt.Printf("  • %s%s → %s\n", entry.Label, shortcutStr, expandedPath)
+				}
+				os.Exit(1)
+			}
+
+			fmt.Printf("%s %s\n", messages.FoundDestination, label)
+			success := openNewShell(targetDir, command, label)
+			if success {
+				// Update history
+				if label != "" {
+					err := updateHistory(tomlFile, label, customHistoryFile)
+					if err != nil {
+						fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
+					}
+				}
+				os.Exit(0)
+			} else {
+				os.Exit(1)
+			}
 		}
 	}
 
+interactive_mode:
 	// Interactive mode
-	targetDir, command, label := getUserChoice(entries, shortcutMap, tomlFile)
+	targetDir, command, label := getUserChoice(entries, shortcutMap, tomlFile, interactiveMode)
 
 	if targetDir == "ADD_CURRENT" {
 		success := addCurrentPathToConfig(tomlFile)
@@ -195,7 +230,7 @@ func main() {
 	if success {
 		// Update history
 		if label != "" {
-			err := updateHistory(tomlFile, label)
+			err := updateHistory(tomlFile, label, customHistoryFile)
 			if err != nil {
 				fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
 			}
@@ -225,6 +260,11 @@ func buildShortcutMap(entries []Entry) map[string]int {
 }
 
 func expandPath(path string) string {
+	// URLの場合はそのまま返す
+	if isURL(path) {
+		return path
+	}
+
 	if strings.HasPrefix(path, "~/") {
 		usr, err := user.Current()
 		if err != nil {
@@ -235,7 +275,35 @@ func expandPath(path string) string {
 	return path
 }
 
-func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string) (string, string, string) {
+// URLかどうかを判定する関数
+func isURL(path string) bool {
+	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
+}
+
+// URLをデフォルトブラウザで開く関数
+func openURL(url string) error {
+	var cmd *exec.Cmd
+
+	// OSに応じたコマンドを設定
+	switch {
+	case strings.Contains(strings.ToLower(os.Getenv("OS")), "windows"):
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	case fileExists("/usr/bin/open"): // macOS
+		cmd = exec.Command("open", url)
+	default: // Linux and others
+		cmd = exec.Command("xdg-open", url)
+	}
+
+	return cmd.Start()
+}
+
+// ファイルが存在するかチェックする関数
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string, interactiveMode string) (string, string, string) {
 	// ターミナル横幅取得
 	termWidth := 80
 	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
@@ -287,13 +355,29 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 		}
 	} // カーソル選択モードかどうかを判定
 	selectedIndex := 0
-	cursorMode := true // デフォルトでカーソルモードを有効にする
-	inputBuffer := ""  // 複数文字入力用のバッファ
+	// インタラクティブモードに基づいて初期モードを決定
+	var cursorMode bool
+	switch interactiveMode {
+	case "cursor":
+		cursorMode = true
+	case "label":
+		cursorMode = false
+	default: // "auto"
+		cursorMode = true // デフォルトでカーソルモードを有効にする
+	}
+	inputBuffer := "" // 複数文字入力用のバッファ
 
-	// 初期表示（カーソルモードで開始）
-	displayEntries(selectedIndex, true)
-	fmt.Printf("%s\n", messages.InteractiveHelp)
-	fmt.Printf("%s\n", messages.CursorModeHint)
+	// 初期表示
+	if cursorMode {
+		displayEntries(selectedIndex, true)
+		fmt.Printf("%s\n", messages.InteractiveHelp)
+		fmt.Printf("%s\n", messages.CursorModeHint)
+	} else {
+		// ラベル入力モードで開始
+		displayEntries(selectedIndex, false)
+		fmt.Printf("%s\n", messages.InteractiveHelp)
+		fmt.Printf("%s\n", messages.EnterChoice)
+	}
 
 	for {
 		if !cursorMode {
@@ -495,12 +579,56 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 
 			// 画面の再描画
 			if redraw {
-				// 画面を完全にクリアして、カーソルをホームポジションに移動
-				fmt.Print("\033[2J\033[H")
-				// ヘッダーを再表示
-				PrintWhiteBackgroundLine(messages.AvailableDestinations)
-				displayEntries(selectedIndex, true)
+				// より効率的な再描画: 変更された行のみを更新
+				// カーソルを最初のエントリー行まで移動
+				fmt.Printf("\033[%dA", len(entries)+3)
+
+				// エントリーリストを再表示（各行を上書き）
+				for i, entry := range entries {
+					expandedPath := expandPath(entry.Path)
+					shortcutStr := ""
+					if entry.Shortcut != "" {
+						shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+					}
+
+					// 表示番号の決定（10以上は"-"で表示）
+					var numStr string
+					if i+1 < 10 {
+						numStr = fmt.Sprintf("%d", i+1)
+					} else {
+						numStr = "-"
+					}
+
+					// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
+					prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
+					maxPathLen := termWidth - len([]rune(prefix))
+					pathStr := expandedPath
+					if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
+						pathStr = shortenPathMiddle(expandedPath, maxPathLen)
+					}
+
+					// 行全体をクリアしてから再表示
+					fmt.Print("\033[2K") // 行をクリア
+					if i == selectedIndex {
+						fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
+					} else {
+						fmt.Printf("%s%s\n", prefix, pathStr)
+					}
+				}
+
+				// Exit行を更新
+				fmt.Print("\033[2K") // 行をクリア
+				exitPrefix := "0. Exit"
+				if selectedIndex == len(entries) {
+					fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
+				} else {
+					fmt.Printf("%s\n", exitPrefix)
+				}
+
+				// メッセージ行を更新
+				fmt.Print("\033[2K") // 行をクリア
 				fmt.Printf("%s\n", messages.InteractiveHelp)
+				fmt.Print("\033[2K") // 行をクリア
 				fmt.Printf("%s\n", messages.CursorNavigationHint)
 			}
 		}
@@ -508,6 +636,23 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 }
 
 func openNewShell(targetDir, command, label string) bool {
+	// URLの場合はブラウザで開く
+	if isURL(targetDir) {
+		fmt.Printf("%s %s\n", messages.OpeningShell, targetDir)
+		if label != "" {
+			fmt.Printf("%s %s\n", messages.Destination, label)
+		}
+
+		err := openURL(targetDir)
+		if err != nil {
+			fmt.Printf("Error opening URL: %v\n", err)
+			return false
+		}
+
+		fmt.Printf("✅ Opened URL in default browser: %s\n", targetDir)
+		return true
+	}
+
 	// Check if directory exists
 	if _, err := os.Stat(targetDir); os.IsNotExist(err) {
 		fmt.Printf("%s %s\n", messages.DirectoryNotExist, targetDir)
@@ -619,13 +764,13 @@ func addCurrentPathToConfig(tomlFile string) bool {
 	fmt.Printf("%s %s\n", messages.CurrentDirectory, currentDir)
 
 	// 既存の設定を読み込んでショートカットマップを作成
-	configWithHistory, err := loadConfigWithHistory(tomlFile)
+	config, err := loadConfig(tomlFile)
 	if err != nil {
 		fmt.Printf("%s %v\n", messages.ErrorReadingConfig, err)
 		return false
 	}
 
-	entries := getEntriesWithHistory(configWithHistory)
+	entries := getEntriesFromConfig(config, "")
 	shortcutMap := buildShortcutMap(entries)
 
 	// フォルダ名をデフォルトラベルとして取得
@@ -745,6 +890,10 @@ func showHelp() {
 	fmt.Printf("\n%s %s\n", messages.ConfigurationFile, configPath)
 	fmt.Printf("\n%s\n", messages.Usage)
 	fmt.Printf("  goto                 %s\n", messages.ShowInteractiveMenu)
+	fmt.Printf("  goto -c              %s\n", "カーソル移動モードでインタラクティブメニューを表示")
+	fmt.Printf("  goto -l              %s\n", "ラベル入力モードでインタラクティブメニューを表示")
+	fmt.Printf("  goto --config FILE   %s\n", "指定した設定ファイルを使用")
+	fmt.Printf("  goto --history-file FILE %s\n", "指定した履歴ファイルを使用")
 	fmt.Printf("  goto <number>        %s\n", messages.GoToDestinationByNumber)
 	fmt.Printf("  goto <label>         %s\n", messages.GoToDestinationByLabel)
 	fmt.Printf("  goto <shortcut>      %s\n", messages.GoToDestinationByShortcut)
@@ -764,58 +913,5 @@ func showCompletions(entries []Entry) {
 	// Output only labels for completion
 	for _, entry := range entries {
 		fmt.Println(entry.Label)
-	}
-}
-
-func showHistory(config ConfigWithHistory) {
-	// Get history file path
-	historyFile, err := getHistoryFilePath()
-	if err != nil {
-		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
-		return
-	}
-
-	// Load history
-	history, err := loadHistory(historyFile)
-	if err != nil {
-		// If there was an error loading history, try using the old format from config
-		if len(config.History) == 0 {
-			fmt.Println(messages.NoUsageHistoryFound)
-			return
-		}
-		history.Entries = config.History
-	}
-
-	if len(history.Entries) == 0 {
-		fmt.Println(messages.NoUsageHistoryFound)
-		return
-	}
-
-	fmt.Println(messages.RecentUsageHistory)
-	fmt.Println(strings.Repeat("=", 50))
-
-	// Sort history by most recent first
-	sortedHistory := make([]HistoryEntry, len(history.Entries))
-	copy(sortedHistory, history.Entries)
-	sort.Slice(sortedHistory, func(i, j int) bool {
-		return sortedHistory[i].LastUsed.After(sortedHistory[j].LastUsed)
-	})
-
-	for i, hist := range sortedHistory {
-		// Format timestamp for display
-		timeStr := hist.LastUsed.Format("2006-01-02 15:04:05")
-
-		// Get destination path if exists
-		pathStr := ""
-		if dest, exists := config.Destinations[hist.Label]; exists {
-			pathStr = fmt.Sprintf(" → %s", expandPath(dest.Path))
-		}
-
-		fmt.Printf("%2d. %s%s\n", i+1, hist.Label, pathStr)
-		fmt.Printf("    📅 %s\n", timeStr)
-
-		if i < len(sortedHistory)-1 {
-			fmt.Println()
-		}
 	}
 }
