@@ -150,7 +150,7 @@ func getMessages(lang Language) Messages {
 
 			// Add directory messages
 			CurrentDirectory:      "📍 現在のディレクトリ:",
-			EnterLabel:            "このディレクトリのラベルを入力してください:",
+			EnterLabel:            "このディレクトリのラベルを入力してください（Enterでデフォルト使用）",
 			EnterShortcut:         "ショートカットキーを入力してください:",
 			EnterShortcutOptional: "ショートカットキーを入力してください（任意、Enterでスキップ）:",
 			LabelCannotBeEmpty:    "❌ ラベルは空にできません。",
@@ -234,7 +234,7 @@ func getMessages(lang Language) Messages {
 
 			// Add directory messages
 			CurrentDirectory:      "📍 当前目录:",
-			EnterLabel:            "请输入此目录的标签:",
+			EnterLabel:            "请输入此目录的标签（回车使用默认值）:",
 			EnterShortcut:         "请输入快捷键:",
 			EnterShortcutOptional: "请输入快捷键（可选，按Enter跳过）:",
 			LabelCannotBeEmpty:    "❌ 标签不能为空。",
@@ -318,7 +318,7 @@ func getMessages(lang Language) Messages {
 
 			// Add directory messages
 			CurrentDirectory:      "📍 현재 디렉토리:",
-			EnterLabel:            "이 디렉토리의 라벨을 입력하세요:",
+			EnterLabel:            "이 디렉토리의 라벨을 입력하세요（엔터로 기본값 사용）:",
 			EnterShortcut:         "단축키를 입력하세요:",
 			EnterShortcutOptional: "단축키를 입력하세요 (선택사항, Enter로 건너뛰기):",
 			LabelCannotBeEmpty:    "❌ 라벨은 비워둘 수 없습니다.",
@@ -402,7 +402,7 @@ func getMessages(lang Language) Messages {
 
 			// Add directory messages
 			CurrentDirectory:      "📍 Directorio actual:",
-			EnterLabel:            "Ingrese una etiqueta para este directorio:",
+			EnterLabel:            "Ingrese una etiqueta para este directorio (Enter para usar predeterminado):",
 			EnterShortcut:         "Ingrese una tecla de acceso rápido:",
 			EnterShortcutOptional: "Ingrese una tecla de acceso rápido (opcional, presione Enter para omitir):",
 			LabelCannotBeEmpty:    "❌ La etiqueta no puede estar vacía.",
@@ -486,7 +486,7 @@ func getMessages(lang Language) Messages {
 
 			// Add directory messages
 			CurrentDirectory:      "📍 Current directory:",
-			EnterLabel:            "Enter a label for this directory:",
+			EnterLabel:            "Enter a label for this directory (Enter to use default):",
 			EnterShortcut:         "Enter a shortcut key:",
 			EnterShortcutOptional: "Enter a shortcut key (optional, press Enter to skip):",
 			LabelCannotBeEmpty:    "❌ Label cannot be empty.",

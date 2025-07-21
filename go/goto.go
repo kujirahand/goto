@@ -628,9 +628,12 @@ func addCurrentPathToConfig(tomlFile string) bool {
 	entries := getEntriesWithHistory(configWithHistory)
 	shortcutMap := buildShortcutMap(entries)
 
+	// フォルダ名をデフォルトラベルとして取得
+	defaultLabel := filepath.Base(currentDir)
+
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Printf("%s ", messages.EnterLabel)
+	fmt.Printf("%s [%s]: ", messages.EnterLabel, defaultLabel)
 	label, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Printf("\n%s\n", messages.OperationCancelled)
@@ -639,8 +642,7 @@ func addCurrentPathToConfig(tomlFile string) bool {
 
 	label = strings.TrimSpace(label)
 	if label == "" {
-		fmt.Println(messages.LabelCannotBeEmpty)
-		return false
+		label = defaultLabel // ラベルが空の場合、フォルダ名をデフォルトとして使用
 	}
 
 	var shortcut string

@@ -117,10 +117,10 @@ func PrintWhiteBackgroundLine(text string) {
 func showInteractiveHelp() {
 	// Clear screen and show help
 	fmt.Print("\033[2J\033[H")
-	
+
 	// Call the same help function as goto -h
 	showHelp()
-	
+
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Println("Press any key to continue...")
 
