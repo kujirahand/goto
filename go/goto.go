@@ -495,8 +495,10 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 
 			// 画面の再描画
 			if redraw {
-				// カーソルを最初の行に移動（Exitオプション分も含める）
-				fmt.Printf("\033[%dA", len(entries)+4)
+				// 画面を完全にクリアして、カーソルをホームポジションに移動
+				fmt.Print("\033[2J\033[H")
+				// ヘッダーを再表示
+				PrintWhiteBackgroundLine(messages.AvailableDestinations)
 				displayEntries(selectedIndex, true)
 				fmt.Printf("%s\n", messages.InteractiveHelp)
 				fmt.Printf("%s\n", messages.CursorNavigationHint)
