@@ -71,7 +71,7 @@ func main() {
 		for i := 0; i < len(args); i++ {
 			arg := args[i]
 
-			if arg == "--config" && i+1 < len(args) {
+			if arg == "--config-file" && i+1 < len(args) {
 				customConfigFile = args[i+1]
 				i++ // Skip the next argument as it's the file path
 			} else if arg == "--history-file" && i+1 < len(args) {
@@ -144,6 +144,18 @@ func main() {
 		// Handle history option
 		if arg == "--history" {
 			showHistory(customConfigFile, customHistoryFile)
+			os.Exit(0)
+		}
+
+		// Handle list option
+		if arg == "--list" {
+			showList(entries)
+			os.Exit(0)
+		}
+
+		// Handle list-label option
+		if arg == "--list-label" {
+			showListLabel(entries)
 			os.Exit(0)
 		}
 
@@ -898,7 +910,7 @@ func showHelp() {
 	fmt.Printf("  goto                 %s\n", messages.ShowInteractiveMenu)
 	fmt.Printf("  goto -c              %s\n", "カーソル移動モードでインタラクティブメニューを表示")
 	fmt.Printf("  goto -l              %s\n", "ラベル入力モードでインタラクティブメニューを表示")
-	fmt.Printf("  goto --config FILE   %s\n", "指定した設定ファイルを使用")
+	fmt.Printf("  goto --config-file FILE %s\n", "指定した設定ファイルを使用")
 	fmt.Printf("  goto --history-file FILE %s\n", "指定した履歴ファイルを使用")
 	fmt.Printf("  goto <number>        %s\n", messages.GoToDestinationByNumber)
 	fmt.Printf("  goto <label>         %s\n", messages.GoToDestinationByLabel)
@@ -907,12 +919,35 @@ func showHelp() {
 	fmt.Printf("  goto -v, --version   %s\n", messages.ShowVersionInfo)
 	fmt.Printf("  goto --complete      %s\n", messages.ShowCompletionCandidates)
 	fmt.Printf("  goto --history       %s\n", messages.ShowRecentUsageHistory)
+	fmt.Printf("  goto --list          %s\n", "履歴順でディレクトリ一覧を表示")
+	fmt.Printf("  goto --list-label    %s\n", "履歴順でラベル一覧を表示")
 	fmt.Printf("  goto --add           %s\n", messages.AddCurrentDirectoryToConfig)
 	fmt.Printf("\n%s\n", messages.Examples)
 	fmt.Printf("  goto 1              %s\n", messages.NavigateToFirstDest)
 	fmt.Printf("  goto Home           %s\n", messages.NavigateToHomeDest)
 	fmt.Printf("  goto h              %s\n", messages.NavigateUsingShortcut)
 	fmt.Printf("  goto                %s\n", messages.ShowInteractiveMenuExample)
+}
+
+// showList displays all destinations sorted by history
+func showList(entries []Entry) {
+	for i, entry := range entries {
+		// Format: number. label (shortcut) → path
+		shortcutStr := ""
+		if entry.Shortcut != "" {
+			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+		}
+
+		expandedPath := expandPath(entry.Path)
+		fmt.Printf("%2d. %s%s → %s\n", i+1, entry.Label, shortcutStr, expandedPath)
+	}
+}
+
+// showListLabel displays only labels sorted by history
+func showListLabel(entries []Entry) {
+	for _, entry := range entries {
+		fmt.Println(entry.Label)
+	}
 }
 
 func showCompletions(entries []Entry) {
