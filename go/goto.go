@@ -293,7 +293,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 	// 初期表示（カーソルモードで開始）
 	displayEntries(selectedIndex, true)
 	fmt.Printf("%s\n", messages.AddCurrentDirectory)
-	fmt.Printf("📋 Press [?] for help, 0. to exit\n")
+	fmt.Printf("📋 Press [?] for help, [0] to exit, [+] to add current dir\n")
 	fmt.Printf("%s\n", messages.CursorModeHint)
 
 	for {
