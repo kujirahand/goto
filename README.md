@@ -17,7 +17,22 @@ brew tap kujirahand/goto
 brew install kujirahand/goto/goto
 ```
 
-### Manual Installation
+### About goto command
+
+In any directory, you can run the `goto --add` command as shown below to add the current directory to the goto configuration file. You will be prompted to specify a label and a shortcut key.
+
+```sh
+cd /path/to/dir  
+goto --add
+```
+
+After that, when you run the `goto` command, you can select a destination directory. Use the arrow keys to navigate and press \[Enter] to move to the selected directory.
+
+Alternatively, you can move to a registered directory by typing `goto <label>` or `goto <shortcut>`.
+
+The `goto` command is a simple tool that does just this.
+
+## Manual Installation
 
 1. **Download** the latest binary for your platform from [Releases](https://github.com/kujirahand/goto/releases)
 2. **Make it executable** and place in your PATH
