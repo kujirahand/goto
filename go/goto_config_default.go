@@ -1,9 +1,11 @@
 package main
 
 // DefaultConfig contains the default TOML configuration
-const DefaultConfig = `[Home]
+const DefaultConfig = `# Configuration for the "goto" command using TOML format
+[Home]
 path = "~/"
 shortcut = "h"
+command = "ls -la && echo 'Welcome to home directory!'"
 
 [Desktop]
 path = "~/Desktop"
@@ -13,16 +15,19 @@ shortcut = "d"
 path = "~/Downloads"
 shortcut = "b"
 
-[goto_app]
-path = "~/repos/goto"
-shortcut = "a"
+[Documents]
+path = "~/Documents"
+shortcut = "D"
 
-[test_with_command]
-path = "~/Desktop"
-shortcut = "t"
-command = "ls -la && echo 'Welcome to test directory!'"
+[goto-config]
+path = "~/"
+shortcut = "e"
+command = "vi ~/.goto.toml"
 
-[test_dir]
-path = "/tmp"
-shortcut = "t"
+["goto-web"]
+path = "https://github.com/kujirahand/goto"
+
+["kujirahand.com"]
+path = "https://kujirahand.com"
+shortcut = "K"
 `
