@@ -1,5 +1,17 @@
 # Makefile for goto command
 
+# Go source files
+GO_SOURCES = goto.go config.go config_io.go goto_print.go goto_version.go locale.go
+
+# Build platforms
+PLATFORMS = \
+	linux/amd64 \
+	linux/arm64 \
+	darwin/amd64 \
+	darwin/arm64 \
+	windows/amd64 \
+	windows/arm64
+
 .PHONY: all build-go install-go install-completion clean test help build-release
 
 # Default target
@@ -8,25 +20,21 @@ all: build-go
 # Build Go version
 build-go:
 	@echo "Building Go version..."
-	cd go && go build -o goto goto.go config.go goto_version.go locale.go
+	cd go && go build -o goto $(GO_SOURCES)
 	@echo "✅ Go version built successfully: go/goto"
 
 # Build release binaries for multiple platforms
 build-release:
 	@echo "Building release binaries for multiple platforms..."
 	@mkdir -p releases
-	@echo "Building for Linux amd64..."
-	cd go && GOOS=linux GOARCH=amd64 go build -o ../releases/goto-linux-amd64 goto.go config.go goto_version.go locale.go
-	@echo "Building for Linux arm64..."
-	cd go && GOOS=linux GOARCH=arm64 go build -o ../releases/goto-linux-arm64 goto.go config.go goto_version.go locale.go
-	@echo "Building for macOS amd64 (Intel)..."
-	cd go && GOOS=darwin GOARCH=amd64 go build -o ../releases/goto-darwin-amd64 goto.go config.go goto_version.go locale.go
-	@echo "Building for macOS arm64 (Apple Silicon)..."
-	cd go && GOOS=darwin GOARCH=arm64 go build -o ../releases/goto-darwin-arm64 goto.go config.go goto_version.go locale.go
-	@echo "Building for Windows amd64..."
-	cd go && GOOS=windows GOARCH=amd64 go build -o ../releases/goto-windows-amd64.exe goto.go config.go goto_version.go locale.go
-	@echo "Building for Windows arm64..."
-	cd go && GOOS=windows GOARCH=arm64 go build -o ../releases/goto-windows-arm64.exe goto.go config.go goto_version.go locale.go
+	@for platform in $(PLATFORMS); do \
+		GOOS=$$(echo $$platform | cut -d/ -f1); \
+		GOARCH=$$(echo $$platform | cut -d/ -f2); \
+		OUTPUT="goto-$$GOOS-$$GOARCH"; \
+		if [ "$$GOOS" = "windows" ]; then OUTPUT="$$OUTPUT.exe"; fi; \
+		echo "Building for $$GOOS $$GOARCH..."; \
+		(cd go && GOOS=$$GOOS GOARCH=$$GOARCH go build -o ../releases/$$OUTPUT $(GO_SOURCES)); \
+	done
 	@echo "✅ All release binaries built successfully in releases/ directory"
 
 # Install Go version to /usr/local/bin
@@ -78,13 +86,22 @@ test: build-go
 
 # Show help
 help:
-	@echo "Available targets:"
-	@echo "  all              - Build Go version (default)"
-	@echo "  build-go         - Build Go version"
-	@echo "  build-release    - Build release binaries for multiple platforms"
+	@echo "goto Makefile - Available targets:"
+	@echo ""
+	@echo "Build targets:"
+	@echo "  all              - Build Go version (default target)"
+	@echo "  build-go         - Build Go version for current platform"
+	@echo "  build-release    - Build release binaries for all supported platforms"
+	@echo ""
+	@echo "Installation targets:"
 	@echo "  install-go       - Install Go version to /usr/local/bin"
 	@echo "  install-completion - Install shell completion scripts"
 	@echo "  install-all      - Install binary and completion scripts"
+	@echo ""
+	@echo "Utility targets:"
 	@echo "  clean            - Clean build artifacts"
-	@echo "  test             - Test Go version"
-	@echo "  help             - Show this help"
+	@echo "  test             - Test Go version (build and run --help)"
+	@echo "  help             - Show this help message"
+	@echo ""
+	@echo "Source files: $(GO_SOURCES)"
+	@echo "Supported platforms: $(PLATFORMS)"
