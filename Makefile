@@ -1,5 +1,8 @@
 # Makefile for goto command
 
+# Get version from goto_version.go
+VERSION := $(shell grep 'Version = ' go/goto_version.go | sed 's/.*"\(.*\)".*/\1/')
+
 # Go source files
 GO_SOURCES = goto.go goto_config_default.go goto_config.go goto_history.go goto_print.go goto_version.go locale.go utils.go
 
@@ -12,7 +15,7 @@ PLATFORMS = \
 	windows/amd64 \
 	windows/arm64
 
-.PHONY: all build-go install-go install-completion clean test help build-release
+.PHONY: all build-go install-go install-completion clean test help build-release build-release-zip
 
 # Default target
 all: build-go
@@ -36,6 +39,27 @@ build-release:
 		(cd go && GOOS=$$GOOS GOARCH=$$GOARCH go build -o ../releases/$$OUTPUT $(GO_SOURCES)); \
 	done
 	@echo "✅ All release binaries built successfully in releases/ directory"
+
+# Build release binaries, create ZIP archives, and clean up binaries
+build-release-zip:
+	@echo "Building release binaries and creating ZIP archives..."
+	@mkdir -p releases
+	@for platform in $(PLATFORMS); do \
+		GOOS=$$(echo $$platform | cut -d/ -f1); \
+		GOARCH=$$(echo $$platform | cut -d/ -f2); \
+		OUTPUT="goto-$$GOOS-$$GOARCH"; \
+		ZIP_NAME="goto-v$(VERSION)-$$GOOS-$$GOARCH.zip"; \
+		if [ "$$GOOS" = "windows" ]; then OUTPUT="$$OUTPUT.exe"; fi; \
+		echo "Building for $$GOOS $$GOARCH..."; \
+		(cd go && GOOS=$$GOOS GOARCH=$$GOARCH go build -o ../releases/$$OUTPUT $(GO_SOURCES)); \
+		echo "Creating ZIP archive: $$ZIP_NAME"; \
+		(cd releases && zip $$ZIP_NAME $$OUTPUT); \
+		echo "Removing binary: $$OUTPUT"; \
+		rm -f releases/$$OUTPUT; \
+	done
+	@echo "✅ All ZIP archives created successfully in releases/ directory"
+	@echo "📦 Created ZIP files:"
+	@ls -la releases/*.zip
 
 # Install Go version to /usr/local/bin
 install-go: build-go
@@ -78,6 +102,12 @@ clean:
 	rm -rf releases/
 	@echo "✅ Clean completed"
 
+# Clean only ZIP files, keep binaries
+clean-zip:
+	@echo "Cleaning ZIP files..."
+	rm -f releases/*.zip
+	@echo "✅ ZIP files cleaned"
+
 # Test Go version
 test: build-go
 	@echo "Testing Go version..."
@@ -92,6 +122,7 @@ help:
 	@echo "  all              - Build Go version (default target)"
 	@echo "  build-go         - Build Go version for current platform"
 	@echo "  build-release    - Build release binaries for all supported platforms"
+	@echo "  build-release-zip - Build release binaries, create ZIP archives, and clean up binaries"
 	@echo ""
 	@echo "Installation targets:"
 	@echo "  install-go       - Install Go version to /usr/local/bin"
@@ -100,8 +131,10 @@ help:
 	@echo ""
 	@echo "Utility targets:"
 	@echo "  clean            - Clean build artifacts"
+	@echo "  clean-zip        - Clean only ZIP files, keep binaries"
 	@echo "  test             - Test Go version (build and run --help)"
 	@echo "  help             - Show this help message"
 	@echo ""
+	@echo "Current version: $(VERSION)"
 	@echo "Source files: $(GO_SOURCES)"
 	@echo "Supported platforms: $(PLATFORMS)"
