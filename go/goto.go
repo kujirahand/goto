@@ -250,7 +250,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 			expandedPath := expandPath(entry.Path)
 			shortcutStr := ""
 			if entry.Shortcut != "" {
-				shortcutStr = fmt.Sprintf("(%s)", entry.Shortcut)
+				shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
 			}
 
 			// 表示番号の決定（10以上は"-"で表示）
@@ -261,8 +261,8 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 				numStr = "-"
 			}
 
-			// 新しいフォーマット: 数字.(ショートカットキー) ラベル → パス
-			prefix := fmt.Sprintf("%s.%s %s → ", numStr, shortcutStr, entry.Label)
+			// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
+			prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
 			maxPathLen := termWidth - len([]rune(prefix))
 			pathStr := expandedPath
 			if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {

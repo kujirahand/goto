@@ -39,12 +39,12 @@ func shortenPathMiddle(path string, maxLen int) string {
 	if currentWidth <= maxLen {
 		return path
 	}
-	
+
 	// 省略が必要な場合
 	r := []rune(path)
 	ellipsis := "..."
 	ellipsisWidth := getDisplayWidth(ellipsis)
-	
+
 	// 利用可能な幅から省略記号の幅を引く
 	availableWidth := maxLen - ellipsisWidth
 	if availableWidth < 6 {
@@ -54,10 +54,10 @@ func shortenPathMiddle(path string, maxLen int) string {
 		}
 		return path
 	}
-	
+
 	// 前半と後半に分ける
 	halfWidth := availableWidth / 2
-	
+
 	// 前半部分を取得
 	var head []rune
 	headWidth := 0
@@ -69,7 +69,7 @@ func shortenPathMiddle(path string, maxLen int) string {
 		head = append(head, char)
 		headWidth += charWidth
 	}
-	
+
 	// 後半部分を取得
 	var tail []rune
 	tailWidth := 0
@@ -82,7 +82,7 @@ func shortenPathMiddle(path string, maxLen int) string {
 		tail = append([]rune{char}, tail...)
 		tailWidth += charWidth
 	}
-	
+
 	return string(head) + ellipsis + string(tail)
 }
 
@@ -96,7 +96,7 @@ func PrintWhiteBackgroundLine(text string) {
 
 	// テキストの表示幅を計算
 	textDisplayWidth := getDisplayWidth(text)
-	
+
 	// パディングが必要な文字数を計算
 	paddingWidth := termWidth - textDisplayWidth
 	if paddingWidth < 0 {
@@ -213,9 +213,9 @@ func showBasicHelp() {
 	fmt.Println("  [Esc]      - Switch to input mode")
 	fmt.Println()
 	fmt.Println("DISPLAY FORMAT:")
-	fmt.Println("  1.(shortcut) Label → Path    - For items 1-9")
-	fmt.Println("  -.(shortcut) Label → Path    - For items 10+")
-	fmt.Println("  0. Exit                      - Exit application")
+	fmt.Println("  1. Label (shortcut) → Path    - For items 1-9")
+	fmt.Println("  -. Label (shortcut) → Path    - For items 10+")
+	fmt.Println("  0. Exit                       - Exit application")
 	fmt.Println()
 	fmt.Println("COMMAND LINE OPTIONS:")
 	fmt.Println("  goto                 - Show interactive menu")
