@@ -304,11 +304,11 @@ func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 		if i+1 < 10 {
 			numStr = fmt.Sprintf("%d", i+1)
 		} else {
-			numStr = "."
+			numStr = "_"
 		}
 
-		// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
-		prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
+		// フォーマット: 数字 ラベル (ショートカットキー) → パス
+		prefix := fmt.Sprintf("%s %s%s → ", numStr, entry.Label, shortcutStr)
 		maxPathLen := termWidth - len([]rune(prefix))
 		pathStr := expandedPath
 		if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
@@ -379,7 +379,9 @@ func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFi
 	inputBuffer := "" // 複数文字入力用のバッファ
 
 	// 初期表示
+	fmt.Print("\033[2J\033[H") // 画面をクリアしてカーソルを左上に移動
 	PrintWhiteBackgroundLine(messages.AvailableDestinations)
+	fmt.Println()
 	displayEntries(entries, selectedIndex, true)
 	fmt.Printf("%s\n", messages.InteractiveHelp)
 	fmt.Printf("%s\n", messages.CursorModeHint)
@@ -426,11 +428,7 @@ func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFi
 			case '?': // ?キーでヘルプ表示
 				showInteractiveHelp()
 				// 画面をクリアして再表示
-				fmt.Print("\033[2J\033[H")
-				PrintWhiteBackgroundLine(messages.AvailableDestinations)
-				displayEntries(entries, selectedIndex, true)
-				fmt.Printf("%s\n", messages.InteractiveHelp)
-				fmt.Printf("%s\n", messages.CursorModeHint)
+				redraw = true
 				continue
 			case 'j': // j キーで下移動 (Vim風)
 				inputBuffer = "" // バッファをクリア
@@ -509,63 +507,19 @@ func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFi
 
 // カーソルモードの画面再描画
 func redrawCursorMode(entries []Entry, selectedIndex int) {
-	// ターミナル横幅取得
-	termWidth := 80
-	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
-		termWidth = w
-	}
+	// より効率的な再描画: 画面全体をクリアしてから再描画
+	fmt.Print("\033[2J\033[H") // 画面をクリアしてカーソルを左上に移動
 
-	// より効率的な再描画: 変更された行のみを更新
-	// カーソルを最初のエントリー行まで移動
-	fmt.Printf("\033[%dA", len(entries)+3)
+	// ヘッダーを表示
+	PrintWhiteBackgroundLine(messages.AvailableDestinations)
+	fmt.Println() // ヘッダーの後に改行
 
-	// エントリーリストを再表示（各行を上書き）
-	for i, entry := range entries {
-		expandedPath := expandPath(entry.Path)
-		shortcutStr := ""
-		if entry.Shortcut != "" {
-			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-		}
+	// エントリーリストを再表示
+	displayEntries(entries, selectedIndex, true)
 
-		// 表示番号の決定（10以上は"-"で表示）
-		var numStr string
-		if i+1 < 10 {
-			numStr = fmt.Sprintf("%d", i+1)
-		} else {
-			numStr = "-"
-		}
-
-		// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
-		prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
-		maxPathLen := termWidth - len([]rune(prefix))
-		pathStr := expandedPath
-		if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
-			pathStr = shortenPathMiddle(expandedPath, maxPathLen)
-		}
-
-		// 行全体をクリアしてから再表示
-		fmt.Print("\033[2K") // 行をクリア
-		if i == selectedIndex {
-			fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
-		} else {
-			fmt.Printf("%s%s\n", prefix, pathStr)
-		}
-	}
-
-	// Exit行を更新
-	fmt.Print("\033[2K") // 行をクリア
-	exitPrefix := "0. Exit"
-	if selectedIndex == len(entries) {
-		fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
-	} else {
-		fmt.Printf("%s\n", exitPrefix)
-	}
-
-	// メッセージ行を更新
-	fmt.Print("\033[2K") // 行をクリア
+	// フッターメッセージを更新
 	fmt.Printf("%s\n", messages.InteractiveHelp)
-	fmt.Print("\033[2K") // 行をクリア
-	fmt.Printf("%s\n", messages.CursorNavigationHint)
+	fmt.Printf("%s\n", messages.CursorModeHint)
 }
 
 // コマンド（ラベル）入力モードでのユーザー選択

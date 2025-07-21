@@ -105,7 +105,7 @@ func PrintWhiteBackgroundLine(text string) {
 	BOW := "\033[47;30m"
 	EOW := "\033[0m"
 	fmt.Printf(
-		"%s%s%*s%s\n",
+		"%s%s%*s%s",
 		BOW,
 		text,
 		paddingWidth, "",
