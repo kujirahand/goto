@@ -59,11 +59,14 @@ func main() {
 
 	tomlFile := filepath.Join(usr.HomeDir, ".goto.toml")
 
+	// Initialize filteredArgs to store remaining arguments after processing options
+	var filteredArgs []string
+
 	// Handle command line arguments
 	if len(os.Args) > 1 {
-		// Check for config and history file options first
+		// Check for config, history file, and interactive mode options first
 		args := os.Args[1:]
-		filteredArgs := []string{}
+		filteredArgs = []string{}
 
 		for i := 0; i < len(args); i++ {
 			arg := args[i]
@@ -74,6 +77,10 @@ func main() {
 			} else if arg == "--history-file" && i+1 < len(args) {
 				customHistoryFile = args[i+1]
 				i++ // Skip the next argument as it's the file path
+			} else if arg == "-c" {
+				interactiveMode = "cursor"
+			} else if arg == "-l" {
+				interactiveMode = "label"
 			} else {
 				filteredArgs = append(filteredArgs, arg)
 			}
@@ -110,28 +117,9 @@ func main() {
 	}
 
 	// Handle remaining command line arguments
-	if len(os.Args) > 1 {
-		// Use filtered args if config/history options were processed
-		args := os.Args[1:]
-		if customConfigFile != "" || customHistoryFile != "" {
-			// Re-filter args to skip --config and --history-file options
-			filteredArgs := []string{}
-			for i := 0; i < len(args); i++ {
-				arg := args[i]
-				if arg == "--config" && i+1 < len(args) {
-					i++ // Skip the next argument
-				} else if arg == "--history-file" && i+1 < len(args) {
-					i++ // Skip the next argument
-				} else {
-					filteredArgs = append(filteredArgs, arg)
-				}
-			}
-			if len(filteredArgs) == 0 {
-				// No remaining arguments, go to interactive mode
-				goto interactive_mode
-			}
-			args = filteredArgs
-		}
+	if len(os.Args) > 1 && len(filteredArgs) > 0 {
+		// Use the already filtered args from the first processing stage
+		args := filteredArgs
 
 		arg := args[0]
 
@@ -159,14 +147,8 @@ func main() {
 			os.Exit(0)
 		}
 
-		// Handle cursor mode option
-		if arg == "-c" {
-			interactiveMode = "cursor"
-		} else if arg == "-l" {
-			// Handle label input mode option
-			interactiveMode = "label"
-		} else if arg == "--add" {
-			// Handle add option
+		// Handle add option
+		if arg == "--add" {
 			success := addCurrentPathToConfig(tomlFile)
 			if success {
 				os.Exit(0)
@@ -207,6 +189,9 @@ func main() {
 			}
 		}
 	}
+
+	// If no arguments or only option flags were provided, go to interactive mode
+	goto interactive_mode
 
 interactive_mode:
 	// Interactive mode
@@ -304,334 +289,355 @@ func fileExists(filename string) bool {
 }
 
 func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string, interactiveMode string) (string, string, string) {
+	// インタラクティブモードに基づいて分岐
+	switch interactiveMode {
+	case "cursor":
+		return getUserChoiceCursorMode(entries, shortcutMap, tomlFile)
+	case "label":
+		return getUserChoiceCmdMode(entries, shortcutMap, tomlFile)
+	default: // "auto"
+		return getUserChoiceCursorMode(entries, shortcutMap, tomlFile) // デフォルトでカーソルモード
+	}
+}
+
+// 共通のエントリー表示処理
+func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 	// ターミナル横幅取得
 	termWidth := 80
 	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
 		termWidth = w
 	}
 
-	// 初期表示
-	PrintWhiteBackgroundLine(messages.AvailableDestinations)
-
-	displayEntries := func(selectedIndex int, cursorMode bool) {
-		for i, entry := range entries {
-			expandedPath := expandPath(entry.Path)
-			shortcutStr := ""
-			if entry.Shortcut != "" {
-				shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-			}
-
-			// 表示番号の決定（10以上は"-"で表示）
-			var numStr string
-			if i+1 < 10 {
-				numStr = fmt.Sprintf("%d", i+1)
-			} else {
-				numStr = "-"
-			}
-
-			// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
-			prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
-			maxPathLen := termWidth - len([]rune(prefix))
-			pathStr := expandedPath
-			if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
-				pathStr = shortenPathMiddle(expandedPath, maxPathLen)
-			}
-
-			// カーソルモードの場合、選択中の項目をハイライト
-			if cursorMode && i == selectedIndex {
-				fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
-			} else {
-				fmt.Printf("%s%s\n", prefix, pathStr)
-			}
+	for i, entry := range entries {
+		expandedPath := expandPath(entry.Path)
+		shortcutStr := ""
+		if entry.Shortcut != "" {
+			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
 		}
 
-		// [0] Exit オプションを追加
-		exitPrefix := "0. Exit"
-		exitIndex := len(entries) // Exitは最後のインデックス
-		if cursorMode && selectedIndex == exitIndex {
-			fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
+		// 表示番号の決定（10以上は"-"で表示）
+		var numStr string
+		if i+1 < 10 {
+			numStr = fmt.Sprintf("%d", i+1)
 		} else {
-			fmt.Printf("%s\n", exitPrefix)
+			numStr = "-"
 		}
-	} // カーソル選択モードかどうかを判定
-	selectedIndex := 0
-	// インタラクティブモードに基づいて初期モードを決定
-	var cursorMode bool
-	switch interactiveMode {
-	case "cursor":
-		cursorMode = true
-	case "label":
-		cursorMode = false
-	default: // "auto"
-		cursorMode = true // デフォルトでカーソルモードを有効にする
+
+		// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
+		prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
+		maxPathLen := termWidth - len([]rune(prefix))
+		pathStr := expandedPath
+		if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
+			pathStr = shortenPathMiddle(expandedPath, maxPathLen)
+		}
+
+		// カーソルモードの場合、選択中の項目をハイライト
+		if cursorMode && i == selectedIndex {
+			fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
+		} else {
+			fmt.Printf("%s%s\n", prefix, pathStr)
+		}
 	}
+
+	// [0] Exit オプションを追加
+	exitPrefix := "0. Exit"
+	exitIndex := len(entries) // Exitは最後のインデックス
+	if cursorMode && selectedIndex == exitIndex {
+		fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
+	} else {
+		fmt.Printf("%s\n", exitPrefix)
+	}
+}
+
+// 共通の入力解析処理
+func parseUserInput(choice string, entries []Entry, shortcutMap map[string]int) (string, string, string) {
+	// Check if user wants to exit
+	if choice == "0" || choice == "exit" || choice == "quit" {
+		return "EXIT", "", ""
+	}
+
+	// Check if user wants to add current directory
+	if choice == "+" {
+		return "ADD_CURRENT", "", ""
+	}
+
+	// Determine input type and get corresponding entry
+	index := 0
+
+	// Check if it's a number
+	if num, err := strconv.Atoi(choice); err == nil {
+		index = num
+	} else if shortcutIndex, exists := shortcutMap[choice]; exists {
+		// Check if it's a shortcut
+		index = shortcutIndex
+	} else {
+		// Check if it's a label name (case-insensitive)
+		for i, entry := range entries {
+			if strings.EqualFold(entry.Label, choice) {
+				index = i + 1
+				break
+			}
+		}
+	}
+
+	if index >= 1 && index <= len(entries) {
+		entry := entries[index-1]
+		expandedPath := expandPath(entry.Path)
+		return expandedPath, entry.Command, entry.Label
+	}
+
+	return "", "", "" // Invalid input
+}
+
+// カーソルモードでのユーザー選択
+func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFile string) (string, string, string) {
+	selectedIndex := 0
 	inputBuffer := "" // 複数文字入力用のバッファ
 
 	// 初期表示
-	if cursorMode {
-		displayEntries(selectedIndex, true)
-		fmt.Printf("%s\n", messages.InteractiveHelp)
-		fmt.Printf("%s\n", messages.CursorModeHint)
-	} else {
-		// ラベル入力モードで開始
-		displayEntries(selectedIndex, false)
-		fmt.Printf("%s\n", messages.InteractiveHelp)
-		fmt.Printf("%s\n", messages.EnterChoice)
-	}
+	PrintWhiteBackgroundLine(messages.AvailableDestinations)
+	displayEntries(entries, selectedIndex, true)
+	fmt.Printf("%s\n", messages.InteractiveHelp)
+	fmt.Printf("%s\n", messages.CursorModeHint)
 
 	for {
-		if !cursorMode {
-			// 通常の入力モード表示
-			displayEntries(selectedIndex, false)
-			fmt.Printf("%s\n", messages.InteractiveHelp)
-			fmt.Printf("%s\n", messages.EnterChoice)
-			fmt.Printf("%s\n", messages.BackToCursorModeHint)
-			fmt.Printf("%s ", messages.EnterChoicePrompt)
+		// Raw modeで入力を読み取り
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			fmt.Printf("Error entering raw mode: %v\n", err)
+			return "", "", ""
+		}
 
-			// 通常の入力モード
-			reader := bufio.NewReader(os.Stdin)
-			choice, err := reader.ReadString('\n')
-			if err != nil {
-				fmt.Printf("\n%s\n", messages.OperationCancelled)
-				return "", "", ""
-			}
+		buffer := make([]byte, 4)
+		n, err := os.Stdin.Read(buffer)
+		term.Restore(int(os.Stdin.Fd()), oldState)
 
-			choice = strings.TrimSpace(choice)
+		if err != nil {
+			fmt.Printf("Error reading input: %v\n", err)
+			return "", "", ""
+		}
 
-			// 空の入力の場合、カーソルモードに切り替え
-			if choice == "" {
-				cursorMode = true
-				// 画面をクリア
-				fmt.Print("\033[2J\033[H")
-				PrintWhiteBackgroundLine(messages.AvailableDestinations)
-				displayEntries(selectedIndex, true)
-				fmt.Printf("%s\n", messages.InteractiveHelp)
-				fmt.Printf("%s\n", messages.CursorModeHint)
-				continue
-			}
+		redraw := false
 
-			// Check if user wants to exit
-			if choice == "0" {
-				fmt.Printf("\n%s\n", messages.OperationCancelled)
-				return "", "", ""
-			}
-
-			// Check if user wants to add current directory
-			if choice == "+" {
+		// キー入力を解析
+		if n == 1 {
+			switch buffer[0] {
+			case 13: // Enter
+				if selectedIndex == len(entries) {
+					// Exitが選択された場合
+					fmt.Printf("\n%s\n", messages.OperationCancelled)
+					return "", "", ""
+				}
+				entry := entries[selectedIndex]
+				expandedPath := expandPath(entry.Path)
+				return expandedPath, entry.Command, entry.Label
+			case 27: // Escape
+				// ラベル入力モードに切り替え
+				return getUserChoiceCmdMode(entries, shortcutMap, tomlFile)
+			case '+':
 				return "ADD_CURRENT", "", ""
-			}
-
-			// Check if user wants to show help
-			if choice == "?" {
+			case '0': // 0キーでExit
+				fmt.Printf("\n%s\n", messages.OperationCancelled)
+				return "", "", ""
+			case '?': // ?キーでヘルプ表示
 				showInteractiveHelp()
 				// 画面をクリアして再表示
 				fmt.Print("\033[2J\033[H")
 				PrintWhiteBackgroundLine(messages.AvailableDestinations)
+				displayEntries(entries, selectedIndex, true)
+				fmt.Printf("%s\n", messages.InteractiveHelp)
+				fmt.Printf("%s\n", messages.CursorModeHint)
 				continue
-			}
+			case 'j': // j キーで下移動 (Vim風)
+				inputBuffer = "" // バッファをクリア
+				if selectedIndex < len(entries) {
+					selectedIndex++
+					redraw = true
+				}
+			case 'k': // k キーで上移動 (Vim風)
+				inputBuffer = "" // バッファをクリア
+				if selectedIndex > 0 {
+					selectedIndex--
+					redraw = true
+				}
+			default:
+				// 数字キー (0-9) またはアルファベットキーの場合
+				if (buffer[0] >= '0' && buffer[0] <= '9') || (buffer[0] >= 'a' && buffer[0] <= 'z') || (buffer[0] >= 'A' && buffer[0] <= 'Z') {
+					inputChar := string(buffer[0])
 
-			// Determine input type and get corresponding entry
-			index := 0
-
-			// Check if it's a number
-			if num, err := strconv.Atoi(choice); err == nil {
-				index = num
-			} else if shortcutIndex, exists := shortcutMap[choice]; exists {
-				// Check if it's a shortcut
-				index = shortcutIndex
-			} else {
-				// Check if it's a label name (case-insensitive)
-				for i, entry := range entries {
-					if strings.EqualFold(entry.Label, choice) {
-						index = i + 1
+					// j/k は上で処理済みなのでスキップ
+					if inputChar == "j" || inputChar == "k" {
 						break
 					}
-				}
-			}
 
-			if index >= 1 && index <= len(entries) {
-				entry := entries[index-1]
-				expandedPath := expandPath(entry.Path)
-				return expandedPath, entry.Command, entry.Label
-			}
-
-			fmt.Println(messages.InvalidInput)
-			continue
-		} else {
-			// カーソルモード
-			// Raw modeで入力を読み取り
-			oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-			if err != nil {
-				fmt.Printf("Error entering raw mode: %v\n", err)
-				return "", "", ""
-			}
-
-			buffer := make([]byte, 4)
-			n, err := os.Stdin.Read(buffer)
-			term.Restore(int(os.Stdin.Fd()), oldState)
-
-			if err != nil {
-				fmt.Printf("Error reading input: %v\n", err)
-				return "", "", ""
-			}
-
-			redraw := false
-
-			// キー入力を解析
-			if n == 1 {
-				switch buffer[0] {
-				case 13: // Enter
-					if selectedIndex == len(entries) {
-						// Exitが選択された場合
-						fmt.Printf("\n%s\n", messages.OperationCancelled)
-						return "", "", ""
-					}
-					entry := entries[selectedIndex]
-					expandedPath := expandPath(entry.Path)
-					return expandedPath, entry.Command, entry.Label
-				case 27: // Escape
-					cursorMode = false
-					inputBuffer = ""           // バッファをクリア
-					fmt.Print("\033[2J\033[H") // 画面クリア
-					PrintWhiteBackgroundLine(messages.AvailableDestinations)
-					continue
-				case '+':
-					return "ADD_CURRENT", "", ""
-				case '0': // 0キーでExit
-					fmt.Printf("\n%s\n", messages.OperationCancelled)
-					return "", "", ""
-				case '?': // ?キーでヘルプ表示
-					showInteractiveHelp()
-					// 画面をクリアして再表示
-					fmt.Print("\033[2J\033[H")
-					PrintWhiteBackgroundLine(messages.AvailableDestinations)
-					displayEntries(selectedIndex, true)
-					fmt.Printf("%s\n", messages.InteractiveHelp)
-					fmt.Printf("%s\n", messages.CursorModeHint)
-					continue
-				case 'j': // j キーで下移動 (Vim風)
-					inputBuffer = "" // バッファをクリア
-					if selectedIndex < len(entries) {
-						selectedIndex++
-						redraw = true
-					}
-				case 'k': // k キーで上移動 (Vim風)
-					inputBuffer = "" // バッファをクリア
-					if selectedIndex > 0 {
-						selectedIndex--
-						redraw = true
-					}
-				default:
-					// 数字キー (0-9) またはアルファベットキーの場合
-					if (buffer[0] >= '0' && buffer[0] <= '9') || (buffer[0] >= 'a' && buffer[0] <= 'z') || (buffer[0] >= 'A' && buffer[0] <= 'Z') {
-						inputChar := string(buffer[0])
-
-						// j/k は上で処理済みなのでスキップ
-						if inputChar == "j" || inputChar == "k" {
-							break
-						}
-
-						// 数字の場合、バッファに追加
-						if buffer[0] >= '0' && buffer[0] <= '9' {
-							inputBuffer += inputChar
-							// 入力された数字が有効な範囲内かチェック
-							if num, err := strconv.Atoi(inputBuffer); err == nil {
-								if num >= 1 && num <= len(entries) {
-									// 有効な番号の場合、少し待ってから決定
-									entry := entries[num-1]
-									expandedPath := expandPath(entry.Path)
-									return expandedPath, entry.Command, entry.Label
-								} else if num > len(entries) {
-									// 範囲外の場合、バッファをクリア
-									inputBuffer = ""
-								}
-							}
-						} else {
-							// ショートカットキーの場合、バッファをクリアして即座に実行
-							inputBuffer = ""
-							if shortcutIndex, exists := shortcutMap[inputChar]; exists {
-								entry := entries[shortcutIndex-1]
+					// 数字の場合、バッファに追加
+					if buffer[0] >= '0' && buffer[0] <= '9' {
+						inputBuffer += inputChar
+						// 入力された数字が有効な範囲内かチェック
+						if num, err := strconv.Atoi(inputBuffer); err == nil {
+							if num >= 1 && num <= len(entries) {
+								// 有効な番号の場合、即座に決定
+								entry := entries[num-1]
 								expandedPath := expandPath(entry.Path)
 								return expandedPath, entry.Command, entry.Label
+							} else if num > len(entries) {
+								// 範囲外の場合、バッファをクリア
+								inputBuffer = ""
 							}
 						}
 					} else {
-						// その他のキーが押された場合、バッファをクリア
+						// ショートカットキーの場合、バッファをクリアして即座に実行
 						inputBuffer = ""
+						if shortcutIndex, exists := shortcutMap[inputChar]; exists {
+							entry := entries[shortcutIndex-1]
+							expandedPath := expandPath(entry.Path)
+							return expandedPath, entry.Command, entry.Label
+						}
 					}
-				}
-			} else if n >= 3 && buffer[0] == 27 && buffer[1] == '[' {
-				switch buffer[2] {
-				case 'A': // Up arrow
-					inputBuffer = "" // バッファをクリア
-					if selectedIndex > 0 {
-						selectedIndex--
-						redraw = true
-					}
-				case 'B': // Down arrow
-					inputBuffer = "" // バッファをクリア
-					if selectedIndex < len(entries) {
-						selectedIndex++
-						redraw = true
-					}
+				} else {
+					// その他のキーが押された場合、バッファをクリア
+					inputBuffer = ""
 				}
 			}
-
-			// 画面の再描画
-			if redraw {
-				// より効率的な再描画: 変更された行のみを更新
-				// カーソルを最初のエントリー行まで移動
-				fmt.Printf("\033[%dA", len(entries)+3)
-
-				// エントリーリストを再表示（各行を上書き）
-				for i, entry := range entries {
-					expandedPath := expandPath(entry.Path)
-					shortcutStr := ""
-					if entry.Shortcut != "" {
-						shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-					}
-
-					// 表示番号の決定（10以上は"-"で表示）
-					var numStr string
-					if i+1 < 10 {
-						numStr = fmt.Sprintf("%d", i+1)
-					} else {
-						numStr = "-"
-					}
-
-					// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
-					prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
-					maxPathLen := termWidth - len([]rune(prefix))
-					pathStr := expandedPath
-					if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
-						pathStr = shortenPathMiddle(expandedPath, maxPathLen)
-					}
-
-					// 行全体をクリアしてから再表示
-					fmt.Print("\033[2K") // 行をクリア
-					if i == selectedIndex {
-						fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
-					} else {
-						fmt.Printf("%s%s\n", prefix, pathStr)
-					}
+		} else if n >= 3 && buffer[0] == 27 && buffer[1] == '[' {
+			switch buffer[2] {
+			case 'A': // Up arrow
+				inputBuffer = "" // バッファをクリア
+				if selectedIndex > 0 {
+					selectedIndex--
+					redraw = true
 				}
-
-				// Exit行を更新
-				fmt.Print("\033[2K") // 行をクリア
-				exitPrefix := "0. Exit"
-				if selectedIndex == len(entries) {
-					fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
-				} else {
-					fmt.Printf("%s\n", exitPrefix)
+			case 'B': // Down arrow
+				inputBuffer = "" // バッファをクリア
+				if selectedIndex < len(entries) {
+					selectedIndex++
+					redraw = true
 				}
-
-				// メッセージ行を更新
-				fmt.Print("\033[2K") // 行をクリア
-				fmt.Printf("%s\n", messages.InteractiveHelp)
-				fmt.Print("\033[2K") // 行をクリア
-				fmt.Printf("%s\n", messages.CursorNavigationHint)
 			}
 		}
+
+		// 画面の再描画
+		if redraw {
+			redrawCursorMode(entries, selectedIndex)
+		}
+	}
+}
+
+// カーソルモードの画面再描画
+func redrawCursorMode(entries []Entry, selectedIndex int) {
+	// ターミナル横幅取得
+	termWidth := 80
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
+		termWidth = w
+	}
+
+	// より効率的な再描画: 変更された行のみを更新
+	// カーソルを最初のエントリー行まで移動
+	fmt.Printf("\033[%dA", len(entries)+3)
+
+	// エントリーリストを再表示（各行を上書き）
+	for i, entry := range entries {
+		expandedPath := expandPath(entry.Path)
+		shortcutStr := ""
+		if entry.Shortcut != "" {
+			shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+		}
+
+		// 表示番号の決定（10以上は"-"で表示）
+		var numStr string
+		if i+1 < 10 {
+			numStr = fmt.Sprintf("%d", i+1)
+		} else {
+			numStr = "-"
+		}
+
+		// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
+		prefix := fmt.Sprintf("%s. %s%s → ", numStr, entry.Label, shortcutStr)
+		maxPathLen := termWidth - len([]rune(prefix))
+		pathStr := expandedPath
+		if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
+			pathStr = shortenPathMiddle(expandedPath, maxPathLen)
+		}
+
+		// 行全体をクリアしてから再表示
+		fmt.Print("\033[2K") // 行をクリア
+		if i == selectedIndex {
+			fmt.Printf("\033[47;30m%s%s\033[0m\n", prefix, pathStr) // 白背景でハイライト
+		} else {
+			fmt.Printf("%s%s\n", prefix, pathStr)
+		}
+	}
+
+	// Exit行を更新
+	fmt.Print("\033[2K") // 行をクリア
+	exitPrefix := "0. Exit"
+	if selectedIndex == len(entries) {
+		fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
+	} else {
+		fmt.Printf("%s\n", exitPrefix)
+	}
+
+	// メッセージ行を更新
+	fmt.Print("\033[2K") // 行をクリア
+	fmt.Printf("%s\n", messages.InteractiveHelp)
+	fmt.Print("\033[2K") // 行をクリア
+	fmt.Printf("%s\n", messages.CursorNavigationHint)
+}
+
+// コマンド（ラベル）入力モードでのユーザー選択
+func getUserChoiceCmdMode(entries []Entry, shortcutMap map[string]int, tomlFile string) (string, string, string) {
+	for {
+		// 画面をクリア
+		fmt.Print("\033[2J\033[H")
+		PrintWhiteBackgroundLine(messages.AvailableDestinations)
+		displayEntries(entries, 0, false)
+		fmt.Printf("%s\n", messages.InteractiveHelp)
+		fmt.Printf("%s\n", messages.EnterChoice)
+		fmt.Printf("%s\n", messages.BackToCursorModeHint)
+		fmt.Printf("%s ", messages.EnterChoicePrompt)
+
+		// 通常の入力モード
+		reader := bufio.NewReader(os.Stdin)
+		choice, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\n%s\n", messages.OperationCancelled)
+			return "", "", ""
+		}
+
+		choice = strings.TrimSpace(choice)
+
+		// 空の入力の場合、カーソルモードに切り替え
+		if choice == "" {
+			return getUserChoiceCursorMode(entries, shortcutMap, tomlFile)
+		}
+
+		// Check if user wants to show help
+		if choice == "?" {
+			showInteractiveHelp()
+			continue
+		}
+
+		// 入力を解析
+		targetDir, command, label := parseUserInput(choice, entries, shortcutMap)
+
+		// Exit選択の場合
+		if targetDir == "EXIT" {
+			fmt.Printf("\n%s\n", messages.OperationCancelled)
+			return "", "", ""
+		}
+
+		// ADD_CURRENT選択の場合
+		if targetDir == "ADD_CURRENT" {
+			return "ADD_CURRENT", "", ""
+		}
+
+		// 無効な入力の場合
+		if targetDir == "" && label == "" && command == "" {
+			fmt.Println(messages.InvalidInput)
+			continue
+		}
+
+		return targetDir, command, label
 	}
 }
 
