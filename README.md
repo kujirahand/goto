@@ -287,7 +287,8 @@ When an entry in a TOML file contains a dot (`.`), its meaning can change. To pr
 
 ```toml
 ["kujirahand.com"]
-path = https://kujirahand.com
+path = "https://kujirahand.com"
+shortcut = "K"
 ```
 
 ## Usage
