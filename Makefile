@@ -1,7 +1,7 @@
 # Makefile for goto command
 
 # Go source files
-GO_SOURCES = goto.go goto_config_default.go goto_config.go goto_history.go goto_print.go goto_version.go locale.go
+GO_SOURCES = goto.go goto_config_default.go goto_config.go goto_history.go goto_print.go goto_version.go locale.go utils.go
 
 # Build platforms
 PLATFORMS = \

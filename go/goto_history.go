@@ -10,10 +10,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
-// showHistory displays the usage history with timestamps and paths
-func showHistory(customConfigFile, customHistoryFile string) {
+// ShowHistory displays the usage history with timestamps and paths
+func ShowHistory(customConfigFile, customHistoryFile string) {
 	// Get configuration file path
 	var tomlFile string
 	if customConfigFile != "" {
@@ -86,4 +87,48 @@ func showHistory(customConfigFile, customHistoryFile string) {
 			fmt.Println()
 		}
 	}
+}
+
+func UpdateHistory(tomlFile string, label string, customHistoryFile string) error {
+	// Get history file path
+	var historyFile string
+	var err error
+
+	if customHistoryFile != "" {
+		historyFile = customHistoryFile
+	} else {
+		historyFile, err = getHistoryFilePath()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Load history
+	history, err := loadHistory(historyFile)
+	if err != nil {
+		// If error loading history, create a new one
+		history = History{Entries: []HistoryEntry{}}
+	}
+
+	// Update or add history entry
+	now := time.Now()
+	found := false
+
+	for i, hist := range history.Entries {
+		if hist.Label == label {
+			history.Entries[i].LastUsed = now
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		history.Entries = append(history.Entries, HistoryEntry{
+			Label:    label,
+			LastUsed: now,
+		})
+	}
+
+	// Save updated history
+	return saveHistory(historyFile, history)
 }

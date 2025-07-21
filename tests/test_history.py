@@ -43,15 +43,37 @@ def test_history_org():
     ret, out, err = helper.run([
         "--list-label"
     ])
+    config_text = helper.load_history_org()
     out_list = out.strip().split('\n')
-    # exec 2
+    # exec 3
     ret, out, err = helper.run([
-        "2"
+        "3"
     ])
     # check history
     ret, out, err = helper.run([
         "--list-label"
     ])
+    config_text2 = helper.load_history_org()
     out2_list = out.strip().split('\n')
-    assert out2_list[0] == out_list[1], f"Expected {out_list[1]} to be most recent but got: {out2_list[0]}"
+    assert out2_list[0] == out_list[2], f"Expected {out_list[1]} to be most recent but got: {out2_list[0]}"
+    assert config_text != config_text2, "Expected history file to be updated after executing a directory"
 
+def test_history_org2():
+    """Test that history entries are sorted by last used time."""
+    ret, out, err = helper.run([
+        "--list-label"
+    ])
+    config_text = helper.load_history_org()
+    out_list = out.strip().split('\n')
+    # exec 3
+    ret, out, err = helper.run([
+        "-l"
+    ], input_text="3\n")
+    # check history
+    ret, out, err = helper.run([
+        "--list-label"
+    ])
+    config_text2 = helper.load_history_org()
+    out2_list = out.strip().split('\n')
+    assert out2_list[0] == out_list[2], f"Expected {out_list[1]} to be most recent but got: {out2_list[0]}"
+    assert config_text != config_text2, "Expected history file to be updated after executing a directory"

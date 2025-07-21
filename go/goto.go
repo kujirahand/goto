@@ -143,7 +143,7 @@ func main() {
 
 		// Handle history option
 		if arg == "--history" {
-			showHistory(customConfigFile, customHistoryFile)
+			ShowHistory(customConfigFile, customHistoryFile)
 			os.Exit(0)
 		}
 
@@ -190,7 +190,7 @@ func main() {
 			if success {
 				// Update history
 				if label != "" {
-					err := updateHistory(tomlFile, label, customHistoryFile)
+					err := UpdateHistory(tomlFile, label, customHistoryFile)
 					if err != nil {
 						fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
 					}
@@ -222,16 +222,16 @@ interactive_mode:
 		fmt.Println(messages.NoDirectorySelected)
 		os.Exit(0)
 	}
-
+	// Update history
+	if label != "" {
+		err := UpdateHistory(tomlFile, label, customHistoryFile)
+		if err != nil {
+			fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
+		}
+	}
+	// Open the selected destination
 	success := openNewShell(targetDir, command, label)
 	if success {
-		// Update history
-		if label != "" {
-			err := updateHistory(tomlFile, label, customHistoryFile)
-			if err != nil {
-				fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
-			}
-		}
 		os.Exit(0)
 	} else {
 		os.Exit(1)
@@ -258,7 +258,7 @@ func buildShortcutMap(entries []Entry) map[string]int {
 
 func expandPath(path string) string {
 	// URLの場合はそのまま返す
-	if isURL(path) {
+	if IsURL(path) {
 		return path
 	}
 
@@ -270,34 +270,6 @@ func expandPath(path string) string {
 		return filepath.Join(usr.HomeDir, path[2:])
 	}
 	return path
-}
-
-// URLかどうかを判定する関数
-func isURL(path string) bool {
-	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
-}
-
-// URLをデフォルトブラウザで開く関数
-func openURL(url string) error {
-	var cmd *exec.Cmd
-
-	// OSに応じたコマンドを設定
-	switch {
-	case strings.Contains(strings.ToLower(os.Getenv("OS")), "windows"):
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	case fileExists("/usr/bin/open"): // macOS
-		cmd = exec.Command("open", url)
-	default: // Linux and others
-		cmd = exec.Command("xdg-open", url)
-	}
-
-	return cmd.Start()
-}
-
-// ファイルが存在するかチェックする関数
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil
 }
 
 func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string, interactiveMode string) (string, string, string) {
@@ -332,7 +304,7 @@ func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 		if i+1 < 10 {
 			numStr = fmt.Sprintf("%d", i+1)
 		} else {
-			numStr = "-"
+			numStr = "."
 		}
 
 		// 新しいフォーマット: 数字. ラベル (ショートカットキー) → パス
@@ -655,13 +627,13 @@ func getUserChoiceCmdMode(entries []Entry, shortcutMap map[string]int, tomlFile 
 
 func openNewShell(targetDir, command, label string) bool {
 	// URLの場合はブラウザで開く
-	if isURL(targetDir) {
+	if IsURL(targetDir) {
 		fmt.Printf("%s %s\n", messages.OpeningShell, targetDir)
 		if label != "" {
 			fmt.Printf("%s %s\n", messages.Destination, label)
 		}
 
-		err := openURL(targetDir)
+		err := OpenURL(targetDir)
 		if err != nil {
 			fmt.Printf("Error opening URL: %v\n", err)
 			return false
