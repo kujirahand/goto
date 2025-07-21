@@ -8,6 +8,17 @@ This is a Go implementation providing fast, dependency-free directory navigation
 
 ## Quick Start
 
+### Using Homebrew (Recommended)
+
+You can easily install `goto` using [Homebrew](https://brew.sh/) on macOS or Linux:
+
+```sh
+brew tap kujirahand/goto
+brew install kujirahand/goto/goto
+```
+
+### Manual Installation
+
 1. **Download** the latest binary for your platform from [Releases](https://github.com/kujirahand/goto/releases)
 2. **Make it executable** and place in your PATH
 3. **Run** `goto` to see the interactive menu
@@ -44,16 +55,12 @@ The easiest way to install `goto` is to download a pre-built binary from the Git
    **For Linux/macOS**:
 
    ```sh
-   # Download and make executable
-   chmod +x goto-*
-   
+   # Unzip the zipped file
+   unzip goto-*.zip
+   # Make the binary executable
+   chmod +x goto-*   
    # Move to a directory in your PATH
    sudo mv goto-* /usr/local/bin/goto
-   
-   # Or create a local bin directory (if it doesn't exist)
-   mkdir -p ~/bin
-   mv goto-* ~/bin/goto
-   export PATH="$PATH:$HOME/bin"  # Add this to your shell config
    ```
 
    **For Windows**:
@@ -83,8 +90,6 @@ To create release archives for all platforms:
 ```sh
 # Create ZIP archives for all platforms (binaries are auto-cleaned)
 make build-release-zip
-
-# Note: Generated ZIP files are in releases/ but excluded from git tracking
 ```
 
 ### Add to PATH
@@ -256,6 +261,19 @@ Each destination can have:
 - `path` (required): Directory path (supports `~` for home directory)
 - `shortcut` (optional): Single character shortcut key
 - `command` (optional): Command to execute after changing directory
+
+こちらが英訳です：
+
+---
+
+### Note: Be Careful with Entries Containing Dots
+
+When an entry in a TOML file contains a dot (`.`), its meaning can change. To prevent this, wrap the entry in double quotes as shown below:
+
+```toml
+["kujirahand.com"]
+path = https://kujirahand.com
+```
 
 ## Usage
 

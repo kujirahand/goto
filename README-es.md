@@ -2,21 +2,22 @@
 
 Comando `goto` para navegar directorios rápidamente.
 
-Esta es unAgregue el ejecutable `goto` compilado a su PATH agregando la siguiente línea a su archivo de configuración de shell (`.bashrc`, `.zshrc`, etc.):
-
-```sh
-export PATH="$PATH:/ruta/a/goto"
-```
-
-Por ejemplo, si clonó en su directorio de inicio:
-
-```sh
-export PATH="$PATH:$HOME/goto"
-```ación en Go que proporciona navegación de directorios rápida y sin dependencias.
+Esta es una implementación en Go que proporciona navegación de directorios rápida y sin dependencias.
 
 - [English](README.md) / [日本語](README-ja.md) / [中文](README-zh.md) / [한국어](README-ko.md)
 
 ## Inicio Rápido
+
+### Instalación usando Homebrew (Recomendado)
+
+Puede instalar fácilmente `goto` usando [Homebrew](https://brew.sh/) en macOS o Linux:
+
+```sh
+brew tap kujirahand/goto
+brew install kujirahand/goto/goto
+```
+
+### Instalación Manual
 
 1. **Descargar** el binario más reciente para su plataforma desde [Releases](https://github.com/kujirahand/goto/releases)
 2. **Hacerlo ejecutable** y colocarlo en su PATH
@@ -49,26 +50,22 @@ La manera más fácil de instalar `goto` es descargar un binario pre-construido 
    - **Windows amd64**: `goto-windows-amd64.exe`
    - **Windows arm64**: `goto-windows-arm64.exe`
 
-3. **Hacerlo ejecutable y colocarlo en su PATH**:
+3. **Hacerlo ejecutable y colocarlo en PATH**:
 
    **Para Linux/macOS**:
 
    ```sh
-   # Descargar y hacer ejecutable
-   chmod +x goto-*
-   
+   # Descomprimir archivo zip
+   unzip goto-*.zip
+   # Hacer el binario ejecutable
+   chmod +x goto-*   
    # Mover a un directorio en su PATH
    sudo mv goto-* /usr/local/bin/goto
-   
-   # O crear un directorio bin local (si no existe)
-   mkdir -p ~/bin
-   mv goto-* ~/bin/goto
-   export PATH="$PATH:$HOME/bin"  # Agregue esto a su configuración de shell
    ```
 
    **Para Windows**:
    - Renombre el archivo descargado a `goto.exe`
-   - Colóquelo en un directorio que esté en su PATH, o cree un nuevo directorio y agréguelo al PATH
+   - Colóquelo en un directorio que esté en su PATH, o cree un nuevo directorio y agréguelo a PATH
 
 4. **Verificar instalación**:
 
@@ -76,7 +73,7 @@ La manera más fácil de instalar `goto` es descargar un binario pre-construido 
    goto --version
    ```
 
-### Clonar y Construir desde Código Fuente
+### Clonar y Construir desde Fuente
 
 ```sh
 # Clonar repositorio
@@ -86,21 +83,30 @@ cd goto
 make
 ```
 
-### Agregar al PATH
+### Construir Archivos de Release (para desarrolladores)
 
-Agregue el directorio `goto/go` a su PATH agregando la siguiente línea a su archivo de configuración de shell (`.bashrc`, `.zshrc`, etc.):
-
-```sh
-export PATH="$PATH:/ruta/a/goto/go"
-```
-
-Por ejemplo, si clonó en su directorio home:
+Para crear archivos de release para todas las plataformas:
 
 ```sh
-export PATH="$PATH:$HOME/goto/go"
+# Crear archivos ZIP para todas las plataformas (los binarios se limpian automáticamente)
+make build-release-zip
 ```
 
-Después de agregar al PATH, recargue su configuración de shell:
+### Agregar a PATH
+
+Después de construir, agregue el ejecutable `goto` compilado a su PATH agregando la siguiente línea a su archivo de configuración de shell (`.bashrc`, `.zshrc`, etc.):
+
+```sh
+export PATH="$PATH:/ruta/a/goto"
+```
+
+Por ejemplo, si clonó en su directorio de inicio:
+
+```sh
+export PATH="$PATH:$HOME/goto"
+```
+
+Después de agregar a PATH, recargue su configuración de shell:
 
 ```sh
 # Para zsh
@@ -110,18 +116,18 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
-### Instalar con Completado con Tab (Construcción desde Código Fuente)
+### Instalación con Completado Tab (Construcción desde Fuente)
 
-Si construyó desde código fuente, puede instalar tanto el binario como los scripts de completado:
+Si construyó desde fuente, puede instalar tanto el binario como los scripts de completado:
 
 ```sh
 # Construir e instalar todo (requiere código fuente)
 make install-all
 ```
 
-### Configuración Manual de Completado con Tab (Para Binarios Pre-construidos)
+### Configuración Manual de Completado Tab (Para Binarios Pre-construidos)
 
-Si descargó un binario pre-construido, aún puede configurar el completado con tab manualmente:
+Si descargó un binario pre-construido, aún puede configurar el completado tab manualmente:
 
 1. **Descargar scripts de completado**:
 
@@ -129,11 +135,11 @@ Si descargó un binario pre-construido, aún puede configurar el completado con 
    # Crear directorios de completado
    mkdir -p ~/.bash_completion.d ~/.zsh/completions
    
-   # Descargar script de completado para bash
+   # Descargar script de completado bash
    curl -o ~/.bash_completion.d/goto-completion.bash \
      https://raw.githubusercontent.com/kujirahand/goto/main/completion/goto-completion.bash
    
-   # Descargar script de completado para zsh
+   # Descargar script de completado zsh
    curl -o ~/.zsh/completions/_goto \
      https://raw.githubusercontent.com/kujirahand/goto/main/completion/_goto
    ```
@@ -160,24 +166,24 @@ Si descargó un binario pre-construido, aún puede configurar el completado con 
    source ~/.zshrc    # para zsh
    ```
 
-### Instalación Avanzada con Completado con Tab (Construcción desde Código Fuente)
+### Instalación Avanzada con Completado Tab (Construcción desde Fuente)
 
-Para la mejor experiencia al construir desde código fuente, instale tanto el binario como los scripts de completado:
+Para la mejor experiencia al construir desde fuente, instale tanto el binario como los scripts de completado:
 
 ```sh
 # Construir e instalar todo
 make install-all
 ```
 
-Esto:
+Esto hará:
 
-1. Instalará el binario `goto` en `/usr/local/bin/`
-2. Instalará scripts de completado de shell
-3. Mostrará instrucciones para habilitar el completado
+1. Instalar el binario `goto` en `/usr/local/bin/`
+2. Instalar scripts de completado de shell
+3. Mostrar instrucciones para habilitar completado
 
-#### Alternativa: Configuración Manual de Completado (Construcción desde Código Fuente)
+#### Alternativa: Configuración Manual de Completado (Construcción desde Fuente)
 
-Si construyó desde código fuente pero prefiere instalar el completado manualmente:
+Si construyó desde fuente pero prefiere instalar completado manualmente:
 
 1. Instalar scripts de completado:
 
@@ -185,7 +191,7 @@ Si construyó desde código fuente pero prefiere instalar el completado manualme
    make install-completion
    ```
 
-2. Agregue lo siguiente a su configuración de shell:
+2. Agregar lo siguiente a su configuración de shell:
 
    **Para bash** (`~/.bashrc` o `~/.bash_profile`):
 
@@ -200,31 +206,36 @@ Si construyó desde código fuente pero prefiere instalar el completado manualme
    autoload -U compinit && compinit
    ```
 
-3. Reinicie su shell o recargue la configuración:
+3. Reiniciar su shell o recargar configuración:
 
    ```sh
    source ~/.bashrc   # para bash
    source ~/.zshrc    # para zsh
    ```
 
-#### Usar Completado con Tab
+#### Uso del Completado Tab
 
-Una vez habilitado, puede usar el completado con tab con el comando `goto`:
+Una vez habilitado, puede usar completado tab con el comando `goto`:
 
 ```sh
 goto <TAB>        # Muestra todos los destinos disponibles
-goto h<TAB>       # Completa accesos rápidos que comienzan con 'h'
-goto Home<TAB>    # Completa etiquetas que comienzan con 'Home'
-goto 1<TAB>       # Muestra destinos con números que comienzan con '1'
+goto h<TAB>       # Completa atajos que empiezan con 'h'
+goto Home<TAB>    # Completa etiquetas que empiezan con 'Home'
+goto 1<TAB>       # Muestra destinos con números que empiezan con '1'
 ```
 
 ## Configuración
 
-### Archivo de configuración - `~/.goto.toml`
+### Archivos de Configuración
 
-El comando `goto` usa un archivo de configuración TOML ubicado en `~/.goto.toml`. Cuando ejecute `goto` por primera vez, creará automáticamente un archivo de configuración predeterminado con destinos de ejemplo.
+El comando `goto` usa los siguientes archivos de configuración:
 
-Configuración de ejemplo:
+- **`~/.goto.toml`**: Archivo de configuración principal que contiene sus destinos
+- **`~/.goto.history.json`**: Datos de historial que almacenan su información de uso reciente
+
+Cuando ejecute `goto` por primera vez, creará automáticamente un archivo de configuración predeterminado con destinos de ejemplo.
+
+Ejemplo de configuración:
 
 ```toml
 [Home]
@@ -249,7 +260,16 @@ Cada destino puede tener:
 
 - `path` (requerido): Ruta del directorio (soporta `~` para directorio home)
 - `shortcut` (opcional): Tecla de acceso rápido de un solo carácter
-- `command` (opcional): Comando a ejecutar después de cambiar de directorio
+- `command` (opcional): Comando a ejecutar después de cambiar directorio
+
+### Nota: Tenga Cuidado con Entradas que Contienen Puntos
+
+Cuando una entrada en un archivo TOML contiene un punto (`.`), su significado puede cambiar. Para prevenir esto, envuelva la entrada en comillas dobles como se muestra a continuación:
+
+```toml
+["kujirahand.com"]
+path = https://kujirahand.com
+```
 
 ## Uso
 
@@ -288,13 +308,13 @@ goto --help
 goto --version
 ```
 
-Esto es útil para scripts o cuando sabe exactamente a dónde quiere ir.
+Esto es útil para scripting o cuando sabe exactamente a dónde quiere ir.
 
 ### Modo Interactivo
 
 Cuando se ejecuta sin argumentos, `goto` muestra un menú interactivo:
 
-Salida de ejemplo:
+Ejemplo de salida:
 
 ```text
 👉 Destinos disponibles:
@@ -305,14 +325,15 @@ Salida de ejemplo:
 
 ➕ [+] Agregar directorio actual
 
-Ingrese número, tecla de acceso rápido, nombre de etiqueta o [+]:
+Por favor ingrese el número, tecla de acceso rápido, o [+] para agregar directorio actual:
+Ingrese número, tecla de acceso rápido, o [+]:
 ```
 
-Puede navegar mediante:
+Puede navegar por:
 
 - **Número**: Ingrese `1`, `2`, `3`, etc.
 - **Acceso rápido**: Ingrese `h`, `d`, `b`, etc.
-- **Agregar actual**: Ingrese `+` para agregar el directorio actual
+- **Agregar actual**: Ingrese `+` para agregar directorio actual
 
 ### Agregar Directorio Actual
 
@@ -328,7 +349,7 @@ goto
 Ejemplo:
 
 ```text
-Destino: +
+Ingrese número, tecla de acceso rápido, o [+]: +
 📍 Directorio actual: /Users/username/workspace/new-project
 Ingrese una etiqueta para este directorio: NewProject
 Ingrese una tecla de acceso rápido (opcional, presione Enter para omitir): n
@@ -336,7 +357,7 @@ Ingrese una tecla de acceso rápido (opcional, presione Enter para omitir): n
 🔑 Acceso rápido: n
 ```
 
-Esta característica le permite agregar rápidamente directorios frecuentemente usados a su lista goto.
+Esta función le permite agregar rápidamente directorios frecuentemente usados a su lista goto.
 
 ### Funcionalidad de Nuevo Shell
 
@@ -349,7 +370,7 @@ Cuando selecciona un destino, `goto` abre una nueva sesión de shell en el direc
 
 ### Historial de Uso
 
-`goto` rastrea automáticamente el historial de uso y muestra destinos en orden del último uso. Esto hace que directorios frecuentemente accedidos aparezcan en la parte superior del menú interactivo.
+`goto` automáticamente rastrea el historial de uso y muestra destinos en orden de más recientemente usado. Esto hace que los directorios frecuentemente accedidos aparezcan en la parte superior del menú interactivo.
 
 #### Ver Historial de Uso
 
@@ -359,7 +380,7 @@ Puede ver su historial de uso reciente con:
 goto --history
 ```
 
-Salida de ejemplo:
+Ejemplo de salida:
 
 ```text
 📈 Historial de uso reciente:
@@ -377,38 +398,34 @@ Salida de ejemplo:
 #### Cómo Funciona el Historial
 
 - **Rastreo automático**: Cada vez que navega a un destino, se registra la marca de tiempo
-- **Ordenamiento inteligente**: En modo interactivo, destinos se ordenan por último uso primero
-- **Almacenamiento persistente**: El historial se almacena en el archivo de configuración `~/.goto.toml`
+- **Ordenamiento inteligente**: En modo interactivo, los destinos se ordenan por más recientemente usado primero
+- **Almacenamiento persistente**: El historial se almacena en el archivo `~/.goto.history.json`
 - **Sin mantenimiento manual**: El historial se actualiza automáticamente - no necesita gestionarlo manualmente
 
-#### Almacenamiento del Historial
+#### Almacenamiento de Historial
 
-El historial de uso se almacena en su archivo `~/.goto.toml` en el siguiente formato:
+El historial de uso se almacena en su archivo `~/.goto.history.json` en el siguiente formato:
 
-```toml
-[[history]]
-  label = "Home"
-  last_used = "2025-07-18T16:08:38+09:00"
-
-[[history]]
-  label = "Desktop"
-  last_used = "2025-07-18T16:04:40+09:00"
-
-# ... sus destinos ...
-[Home]
-path = "~/"
-shortcut = "h"
-
-[Desktop]
-path = "~/Desktop"
-shortcut = "d"
+```json
+{
+  "entries": [
+    {
+      "label": "Home",
+      "last_used": "2025-07-18T16:08:38+09:00"
+    },
+    {
+      "label": "Desktop",
+      "last_used": "2025-07-18T16:04:40+09:00"
+    }
+  ]
+}
 ```
 
 Este ordenamiento inteligente asegura que sus directorios más frecuentemente usados siempre sean fácilmente accesibles.
 
 ## Soporte Multiidioma
 
-`goto` detecta automáticamente el idioma de su sistema y muestra mensajes en su idioma preferido. Idiomas actualmente soportados:
+`goto` automáticamente detecta el idioma de su sistema y muestra mensajes en su idioma preferido. Idiomas actualmente soportados:
 
 - **Inglés** (en) - Predeterminado
 - **Japonés** (ja) - 日本語
@@ -418,7 +435,7 @@ Este ordenamiento inteligente asegura que sus directorios más frecuentemente us
 
 ### Cómo Funciona la Detección de Idioma
 
-La aplicación detecta automáticamente el idioma de su sistema verificando las siguientes variables de entorno en orden:
+La aplicación automáticamente detecta el idioma de su sistema verificando las siguientes variables de entorno en orden:
 
 1. `LANG`
 2. `LANGUAGE`
@@ -474,13 +491,13 @@ Por ejemplo, si su sistema está configurado en español (`LANG=es_ES.UTF-8`), `
 📈 Historial de uso reciente:
 ```
 
-### Anular Idioma
+### Sobreescribir Idioma
 
-Si desea usar un idioma específico independientemente de la configuración de su sistema, puede establecer la variable de entorno `LANG`:
+Si quiere usar un idioma específico independientemente de su configuración de sistema, puede establecer la variable de entorno `LANG`:
 
 ```sh
-# Usar interfaz en japonés
-LANG=ja_JP.UTF-8 goto
+# Usar interfaz en español
+LANG=es_ES.UTF-8 goto
 
 # Usar interfaz en inglés
 LANG=en_US.UTF-8 goto
@@ -491,22 +508,22 @@ LANG=zh_CN.UTF-8 goto
 # Usar interfaz en coreano
 LANG=ko_KR.UTF-8 goto
 
-# Usar interfaz en español
-LANG=es_ES.UTF-8 goto
+# Usar interfaz en japonés
+LANG=ja_JP.UTF-8 goto
 ```
 
 ### Idiomas Soportados
 
-El soporte multiidioma cubre todos los elementos de la interfaz de usuario incluyendo:
+El soporte multiidioma cubre todos los elementos de interfaz de usuario incluyendo:
 
-- Mensajes del menú interactivo
+- Mensajes de menú interactivo
 - Confirmaciones de navegación
 - Mensajes de error
 - Texto de ayuda
-- Visualización del historial
+- Visualización de historial
 - Mensajes de configuración
 
-Todos los mensajes se localizan automáticamente basándose en la configuración de idioma de su sistema, proporcionando una experiencia nativa para usuarios internacionales.
+Todos los mensajes se localizan automáticamente basándose en su configuración de idioma de sistema, proporcionando una experiencia nativa para usuarios internacionales.
 
 ### Ejemplos
 

@@ -10,11 +10,10 @@
 
 ```bash
 cd <root_directory>
-pytest
+pytest .
 ```
 
-意味のあるテストを作成してください。
-`/tests/test_interactive_history_sorting.py` のようなファイルにテストを追加してください。
+ただし、`/tests/goto_helper.py`をインポートして、`goto`コマンドを実行する際には、`run`関数を使用してください。インタラクティブモードのテストをするときには、`run`関数の引数に`-l`と引数input_textを指定してください。
 
 ### コミットメッセージについて
 

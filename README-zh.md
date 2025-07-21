@@ -1,22 +1,25 @@
 # goto 命令
 
-`goto` 命令用于快速导航目录。
+用于快速导航目录的 `goto` 命令。
 
 这是一个 Go 实现，提供快速、无依赖的目录导航。
 
+- [English](README.md) / [日本語](README-ja.md) / [한국어](README-ko.md) / [Español](README-es.md)
+
 ## 快速开始
 
-1. **下载** 从通过将以下行添加到您的 shell 配置文件（`.bashrc`、`.zshrc` 等）来将构建的 `goto` 可执行文件添加到 PATH：
+### 使用 Homebrew 安装（推荐）
+
+您可以在 macOS 或 Linux 上使用 [Homebrew](https://brew.sh/) 轻松安装 `goto`：
 
 ```sh
-export PATH="$PATH:/path/to/goto"
+brew tap kujirahand/goto
+brew install kujirahand/goto/goto
 ```
 
-例如，如果您克隆到了主目录：
+### 手动安装
 
-```sh
-export PATH="$PATH:$HOME/goto"
-```(https://github.com/kujirahand/goto/releases) 下载适用于您平台的最新二进制文件
+1. **下载** 从 [Releases](https://github.com/kujirahand/goto/releases) 下载适用于您平台的最新二进制文件
 2. **设置执行权限** 并将其放在 PATH 中
 3. **运行** `goto` 查看交互式菜单
 
@@ -27,7 +30,7 @@ export PATH="$PATH:$HOME/goto"
 - **多种输入方式**: 使用数字、标签或快捷键
 - **Tab 补全**: 支持 Bash 和 Zsh 补全
 - **跨平台**: 在 Linux、macOS 和 Windows 上运行
-- **多语言支持**: 自动语言检测（英语、日语、中文、韩语）
+- **多语言支持**: 自动语言检测（英语、日语、中文、韩语、西班牙语）
 - **零依赖**: 无外部依赖的单一二进制文件
 
 ## 安装
@@ -52,21 +55,17 @@ export PATH="$PATH:$HOME/goto"
    **对于 Linux/macOS**:
 
    ```sh
-   # 下载并设置执行权限
-   chmod +x goto-*
-   
+   # 解压 zip 文件
+   unzip goto-*.zip
+   # 使二进制文件可执行
+   chmod +x goto-*   
    # 移动到 PATH 中的目录
    sudo mv goto-* /usr/local/bin/goto
-   
-   # 或创建本地 bin 目录（如果不存在）
-   mkdir -p ~/bin
-   mv goto-* ~/bin/goto
-   export PATH="$PATH:$HOME/bin"  # 将此添加到您的 shell 配置中
    ```
 
    **对于 Windows**:
    - 将下载的文件重命名为 `goto.exe`
-   - 将其放在 PATH 中的目录中，或创建新目录并将其添加到 PATH
+   - 将其放在 PATH 中包含的目录中，或创建新目录并将其添加到 PATH
 
 4. **验证安装**:
 
@@ -74,7 +73,7 @@ export PATH="$PATH:$HOME/goto"
    goto --version
    ```
 
-### 从源代码克隆和构建
+### 从源码克隆和构建
 
 ```sh
 # 克隆仓库
@@ -84,21 +83,30 @@ cd goto
 make
 ```
 
+### 构建发布存档（开发者用）
+
+要为所有平台创建发布存档：
+
+```sh
+# 为所有平台创建 ZIP 存档（二进制文件会自动清理）
+make build-release-zip
+```
+
 ### 添加到 PATH
 
-通过将以下行添加到您的 shell 配置文件（`.bashrc`、`.zshrc` 等）来将 `goto/go` 目录添加到 PATH：
+构建后，通过将以下行添加到您的 shell 配置文件（`.bashrc`、`.zshrc` 等）来将编译的 `goto` 可执行文件添加到 PATH：
 
 ```sh
-export PATH="$PATH:/path/to/goto/go"
+export PATH="$PATH:/path/to/goto"
 ```
 
-例如，如果您克隆到主目录：
+例如，如果您克隆到了主目录：
 
 ```sh
-export PATH="$PATH:$HOME/goto/go"
+export PATH="$PATH:$HOME/goto"
 ```
 
-添加到 PATH 后，重新加载 shell 配置：
+添加到 PATH 后，重新加载您的 shell 配置：
 
 ```sh
 # 对于 zsh
@@ -108,9 +116,9 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
-### 使用 Tab 补全安装（源代码构建）
+### 带 Tab 补全的安装（源码构建）
 
-如果您从源代码构建，可以安装二进制文件和补全脚本：
+如果您从源码构建，可以安装二进制文件和补全脚本：
 
 ```sh
 # 构建并安装所有内容（需要源代码）
@@ -136,31 +144,31 @@ make install-all
      https://raw.githubusercontent.com/kujirahand/goto/main/completion/_goto
    ```
 
-2. **添加到 shell 配置**:
+2. **添加到您的 shell 配置**:
 
-   **对于 bash**（`~/.bashrc` 或 `~/.bash_profile`）:
+   **对于 bash** (`~/.bashrc` 或 `~/.bash_profile`):
 
    ```sh
    source ~/.bash_completion.d/goto-completion.bash
    ```
 
-   **对于 zsh**（`~/.zshrc`）:
+   **对于 zsh** (`~/.zshrc`):
 
    ```sh
    fpath=(~/.zsh/completions $fpath)
    autoload -U compinit && compinit
    ```
 
-3. **重启 shell 或重新加载配置**:
+3. **重启您的 shell 或重新加载配置**:
 
    ```sh
-   source ~/.bashrc   # 对于 bash
-   source ~/.zshrc    # 对于 zsh
+   source ~/.bashrc   # 用于 bash
+   source ~/.zshrc    # 用于 zsh
    ```
 
-### 使用 Tab 补全的高级安装（源代码构建）
+### 带 Tab 补全的高级安装（源码构建）
 
-从源代码构建时获得最佳体验，安装二进制文件和补全脚本：
+从源码构建时获得最佳体验，安装二进制文件和补全脚本：
 
 ```sh
 # 构建并安装所有内容
@@ -173,9 +181,9 @@ make install-all
 2. 安装 shell 补全脚本
 3. 显示启用补全的说明
 
-#### 替代方案：手动补全设置（源代码构建）
+#### 替代方案：手动补全设置（源码构建）
 
-如果您从源代码构建但希望手动安装补全：
+如果您从源码构建但希望手动安装补全：
 
 1. 安装补全脚本：
 
@@ -185,24 +193,24 @@ make install-all
 
 2. 将以下内容添加到您的 shell 配置：
 
-   **对于 bash**（`~/.bashrc` 或 `~/.bash_profile`）:
+   **对于 bash** (`~/.bashrc` 或 `~/.bash_profile`):
 
    ```sh
    source ~/.bash_completion.d/goto-completion.bash
    ```
 
-   **对于 zsh**（`~/.zshrc`）:
+   **对于 zsh** (`~/.zshrc`):
 
    ```sh
    fpath=(~/.zsh/completions $fpath)
    autoload -U compinit && compinit
    ```
 
-3. 重启 shell 或重新加载配置：
+3. 重启您的 shell 或重新加载配置：
 
    ```sh
-   source ~/.bashrc   # 对于 bash
-   source ~/.zshrc    # 对于 zsh
+   source ~/.bashrc   # 用于 bash
+   source ~/.zshrc    # 用于 zsh
    ```
 
 #### 使用 Tab 补全
@@ -218,9 +226,14 @@ goto 1<TAB>       # 显示以 '1' 开头的数字目标
 
 ## 配置
 
-### 配置文件 - `~/.goto.toml`
+### 配置文件
 
-`goto` 命令使用位于 `~/.goto.toml` 的 TOML 配置文件。当您首次运行 `goto` 时，它会自动创建一个包含示例目标的默认配置文件。
+`goto` 命令使用以下配置文件：
+
+- **`~/.goto.toml`**: 包含您目标的主配置文件
+- **`~/.goto.history.json`**: 存储您最近使用信息的历史数据
+
+首次运行时，`goto` 将自动创建包含示例目标的默认配置文件。
 
 配置示例：
 
@@ -245,11 +258,20 @@ command = "ls -la && git status"
 
 每个目标可以有：
 
-- `path`（必需）：目录路径（支持 `~` 表示主目录）
-- `shortcut`（可选）：单字符快捷键
-- `command`（可选）：更改目录后执行的命令
+- `path`（必需）: 目录路径（支持主目录的 `~`）
+- `shortcut`（可选）: 单个字符快捷键
+- `command`（可选）: 更改目录后执行的命令
 
-## 使用
+### 注意：包含点的条目
+
+当 TOML 文件中的条目包含点（`.`）时，其含义可能会改变。为了防止这种情况，请用双引号包围条目，如下所示：
+
+```toml
+["kujirahand.com"]
+path = https://kujirahand.com
+```
+
+## 使用方法
 
 ### 基本使用
 
@@ -261,7 +283,7 @@ goto
 
 ### 命令行参数
 
-您也可以直接指定目标作为命令行参数：
+您也可以直接将目标指定为命令行参数：
 
 ```sh
 # 使用数字
@@ -288,14 +310,14 @@ goto --version
 
 这对于脚本编写或当您确切知道要去哪里时很有用。
 
-### 交互式模式
+### 交互模式
 
 不带参数运行时，`goto` 显示交互式菜单：
 
 示例输出：
 
 ```text
-👉 可用目录:
+👉 可用目标:
 1. Home → /Users/username/ (shortcut: h)
 2. Desktop → /Users/username/Desktop (shortcut: d)
 3. Downloads → /Users/username/Downloads (shortcut: b)
@@ -303,39 +325,39 @@ goto --version
 
 ➕ [+] 添加当前目录
 
-请输入编号、快捷键、标签名称或 [+] 添加当前目录:
-输入编号、快捷键、标签名称或 [+]:
+请输入数字、快捷键或 [+] 添加当前目录:
+输入数字、快捷键或 [+]:
 ```
 
 您可以通过以下方式导航：
 
-- **数字**：输入 `1`、`2`、`3` 等
-- **快捷键**：输入 `h`、`d`、`b` 等
-- **添加当前目录**：输入 `+` 添加当前目录
+- **数字**: 输入 `1`、`2`、`3` 等
+- **快捷键**: 输入 `h`、`d`、`b` 等
+- **添加当前**: 输入 `+` 添加当前目录
 
 ### 添加当前目录
 
-您可以通过选择 `[+]` 将当前目录添加到 goto 目标：
+您可以通过选择 `[+]` 将当前目录添加到您的 goto 目标：
 
 ```sh
 goto
 # 从菜单中选择 [+]
-# 输入当前目录的标签
+# 为当前目录输入标签
 # 可选择输入快捷键
 ```
 
 示例：
 
 ```text
-输入编号、快捷键、标签名称或 [+]: +
+输入数字、快捷键或 [+]: +
 📍 当前目录: /Users/username/workspace/new-project
-请输入此目录的标签: NewProject
-请输入快捷键（可选，按Enter跳过）: n
+为此目录输入标签: NewProject
+输入快捷键（可选，按 Enter 跳过）: n
 ✅ 已添加 'NewProject' → /Users/username/workspace/new-project
 🔑 快捷键: n
 ```
 
-此功能允许您快速将常用目录添加到 goto 列表中。
+此功能允许您快速将常用目录添加到您的 goto 列表。
 
 ### 新 Shell 功能
 
@@ -343,8 +365,8 @@ goto
 
 - 您当前的 shell 会话保持不变
 - 您在新位置获得新的 shell 环境
-- 输入 `exit` 返回到之前的 shell
-- 如果配置中指定了 `command`，它会自动执行
+- 输入 `exit` 返回到您之前的 shell
+- 如果在配置中指定了 `command`，它将自动执行
 
 ### 使用历史
 
@@ -375,48 +397,45 @@ goto --history
 
 #### 历史工作原理
 
-- **自动跟踪**：每次导航到目标时，都会记录时间戳
-- **智能排序**：在交互模式中，目标按最近使用的顺序排序
-- **持久存储**：历史存储在 `~/.goto.toml` 配置文件中
-- **无需手动维护**：历史会自动更新 - 无需手动管理
+- **自动跟踪**: 每次导航到目标时，都会记录时间戳
+- **智能排序**: 在交互模式下，目标按最近使用的顺序排序
+- **持久存储**: 历史存储在 `~/.goto.history.json` 文件中
+- **无需手动维护**: 历史自动更新 - 无需手动管理
 
 #### 历史存储
 
-使用历史以以下格式存储在您的 `~/.goto.toml` 文件中：
+使用历史存储在您的 `~/.goto.history.json` 文件中，格式如下：
 
-```toml
-[[history]]
-  label = "Home"
-  last_used = "2025-07-18T16:08:38+09:00"
-
-[[history]]
-  label = "Desktop"
-  last_used = "2025-07-18T16:04:40+09:00"
-
-# ... 您的目标 ...
-[Home]
-path = "~/"
-shortcut = "h"
-
-[Desktop]
-path = "~/Desktop"
-shortcut = "d"
+```json
+{
+  "entries": [
+    {
+      "label": "Home",
+      "last_used": "2025-07-18T16:08:38+09:00"
+    },
+    {
+      "label": "Desktop",
+      "last_used": "2025-07-18T16:04:40+09:00"
+    }
+  ]
+}
 ```
 
 这种智能排序确保您最常用的目录始终易于访问。
 
-### 多语言支持
+## 多语言支持
 
-`goto` 自动检测您的系统语言并以您的首选语言显示消息。目前支持的语言：
+`goto` 自动检测您的系统语言并以您首选的语言显示消息。目前支持的语言：
 
-- **English** (en) - 英语（默认）
-- **Japanese** (ja) - 日語
-- **Chinese** (zh) - 中文
-- **Korean** (ko) - 한국어
+- **英语** (en) - 默认
+- **日语** (ja) - 日本語
+- **中文** (zh) - 中文
+- **韩语** (ko) - 한국어
+- **西班牙语** (es) - Español
 
-#### 语言检测工作原理
+### 语言检测工作原理
 
-应用程序通过按顺序检查以下环境变量来自动检测系统语言：
+应用程序通过按顺序检查以下环境变量来自动检测您的系统语言：
 
 1. `LANG`
 2. `LANGUAGE`
@@ -425,9 +444,9 @@ shortcut = "d"
 
 例如，如果您的系统设置为中文（`LANG=zh_CN.UTF-8`），`goto` 将自动以中文显示所有消息。
 
-#### 不同语言的示例输出
+### 不同语言的示例输出
 
-**English:**
+**英语:**
 
 ```text
 🚀 goto - Navigate directories quickly
@@ -436,7 +455,7 @@ shortcut = "d"
 📈 Recent usage history:
 ```
 
-**Japanese:**
+**日语:**
 
 ```text
 🚀 goto - ディレクトリ間を素早く移動
@@ -445,7 +464,7 @@ shortcut = "d"
 📈 最近の使用履歴:
 ```
 
-**Chinese:**
+**中文:**
 
 ```text
 🚀 goto - 快速导航目录
@@ -454,7 +473,7 @@ shortcut = "d"
 📈 最近使用历史:
 ```
 
-**Korean:**
+**韩语:**
 
 ```text
 🚀 goto - 디렉토리 빠른 탐색
@@ -463,25 +482,37 @@ shortcut = "d"
 📈 최근 사용 기록:
 ```
 
-#### 语言覆盖
+**西班牙语:**
+
+```text
+🚀 goto - Navegar directorios rápidamente
+👉 Destinos disponibles:
+1. Home → /Users/username/ (shortcut: h)
+📈 Historial de uso reciente:
+```
+
+### 语言覆盖
 
 如果您想使用特定语言而不考虑系统设置，可以设置 `LANG` 环境变量：
 
 ```sh
-# 使用日语界面
-LANG=ja_JP.UTF-8 goto
-
-# 使用英语界面
-LANG=en_US.UTF-8 goto
-
 # 使用中文界面
 LANG=zh_CN.UTF-8 goto
 
-# 使用韩语界面
+# 使用英文界面
+LANG=en_US.UTF-8 goto
+
+# 使用日文界面
+LANG=ja_JP.UTF-8 goto
+
+# 使用韩文界面
 LANG=ko_KR.UTF-8 goto
+
+# 使用西班牙语界面
+LANG=es_ES.UTF-8 goto
 ```
 
-#### 支持的语言
+### 支持的语言
 
 多语言支持涵盖所有用户界面元素，包括：
 
@@ -496,35 +527,35 @@ LANG=ko_KR.UTF-8 goto
 
 ### 示例
 
-1. **使用命令行参数导航（数字）：**
+1. **使用命令行参数导航（数字）:**
 
    ```sh
    goto 1
    goto 4
    ```
 
-2. **使用命令行参数导航（标签）：**
+2. **使用命令行参数导航（标签）:**
 
    ```sh
    goto Home
    goto MyProject
    ```
 
-3. **使用命令行参数导航（快捷键）：**
+3. **使用命令行参数导航（快捷键）:**
 
    ```sh
    goto h
    goto p
    ```
 
-4. **交互式导航：**
+4. **交互式导航:**
 
    ```sh
    goto
    # 然后输入: h（快捷键）、1（数字）或 Home（标签）
    ```
 
-5. **添加当前目录：**
+5. **添加当前目录:**
 
    ```sh
    cd /path/to/important/project
@@ -534,7 +565,7 @@ LANG=ko_KR.UTF-8 goto
    # 快捷键: i
    ```
 
-6. **查看使用历史：**
+6. **查看使用历史:**
 
    ```sh
    goto --history
