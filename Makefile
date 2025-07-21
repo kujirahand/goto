@@ -41,8 +41,10 @@ build-release:
 	@echo "✅ All release binaries built successfully in releases/ directory"
 
 # Build release binaries, create ZIP archives, and clean up binaries
+# Note: ZIP files are created locally but not committed to git (excluded by .gitignore)
 build-release-zip:
 	@echo "Building release binaries and creating ZIP archives..."
+	@echo "Note: ZIP files will be created locally but not tracked in git"
 	@mkdir -p releases
 	@for platform in $(PLATFORMS); do \
 		GOOS=$$(echo $$platform | cut -d/ -f1); \

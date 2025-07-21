@@ -196,4 +196,9 @@ cython_debug/
 
 # Go binary
 go/goto
+
+# Release artifacts (binaries and archives)
 releases/
+releases/*.zip
+releases/goto-*
+*.zip

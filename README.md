@@ -76,6 +76,17 @@ cd goto
 make
 ```
 
+### Build Release Archives (for developers)
+
+To create release archives for all platforms:
+
+```sh
+# Create ZIP archives for all platforms (binaries are auto-cleaned)
+make build-release-zip
+
+# Note: Generated ZIP files are in releases/ but excluded from git tracking
+```
+
 ### Add to PATH
 
 After building, add the compiled `goto` executable to your PATH by adding the following line to your shell configuration file (`.bashrc`, `.zshrc`, etc.):
