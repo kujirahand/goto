@@ -84,6 +84,17 @@ func shortenPathMiddle(path string, maxLen int) string {
 	return string(head) + ellipsis + string(tail)
 }
 
+func PrintHorzontalLine(flag string) {
+	// ターミナル横幅取得
+	termWidth := 80
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
+		termWidth = w
+	}
+
+	// 横線を表示
+	fmt.Println(strings.Repeat(flag, termWidth))
+}
+
 // PrintWhiteBackgroundLine prints a line with white background
 func PrintWhiteBackgroundLine(text string) {
 	// ターミナル横幅取得

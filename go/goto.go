@@ -40,58 +40,94 @@ type History struct {
 	Entries []HistoryEntry `json:"entries"`
 }
 
+// AppConfig holds application configuration
+type AppConfig struct {
+	ConfigFile      string
+	HistoryFile     string
+	InteractiveMode string
+	FilteredArgs    []string
+}
+
 func main() {
 	// Initialize language support
-	currentLanguage = detectLanguage()
-	messages = getMessages(currentLanguage)
+	initializeLanguage()
 
-	// Parse command line arguments for config and history file options
-	var customConfigFile string
-	var customHistoryFile string
-	var interactiveMode string = "auto" // auto, cursor, label
+	// Parse command line arguments and get configuration
+	appConfig := parseCommandLineArgs()
 
 	// Get configuration file path
+	tomlFile := getConfigFilePath(appConfig.ConfigFile)
+
+	// Load and validate configuration
+	entries, shortcutMap := loadAndValidateConfig(tomlFile, appConfig.HistoryFile)
+
+	// Handle command line arguments
+	if len(appConfig.FilteredArgs) > 0 {
+		handleCommandLineArguments(appConfig.FilteredArgs, entries, shortcutMap, tomlFile, appConfig.HistoryFile)
+		return
+	}
+
+	// Run interactive mode
+	runInteractiveMode(entries, shortcutMap, tomlFile, appConfig.InteractiveMode)
+}
+
+// initializeLanguage initializes language support
+func initializeLanguage() {
+	currentLanguage = detectLanguage()
+	messages = getMessages(currentLanguage)
+}
+
+// parseCommandLineArgs parses command line arguments and returns configuration
+func parseCommandLineArgs() AppConfig {
+	config := AppConfig{
+		InteractiveMode: "auto", // auto, cursor, label
+	}
+
+	if len(os.Args) <= 1 {
+		return config
+	}
+
+	args := os.Args[1:]
+	config.FilteredArgs = []string{}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+
+		if arg == "--config-file" && i+1 < len(args) {
+			config.ConfigFile = args[i+1]
+			i++ // Skip the next argument as it's the file path
+		} else if arg == "--history-file" && i+1 < len(args) {
+			config.HistoryFile = args[i+1]
+			i++ // Skip the next argument as it's the file path
+		} else if arg == "-c" {
+			config.InteractiveMode = "cursor"
+		} else if arg == "-l" {
+			config.InteractiveMode = "label"
+		} else {
+			config.FilteredArgs = append(config.FilteredArgs, arg)
+		}
+	}
+
+	return config
+}
+
+// getConfigFilePath returns the configuration file path
+func getConfigFilePath(customConfigFile string) string {
+	if customConfigFile != "" {
+		return customConfigFile
+	}
+
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Printf("%s %v\n", messages.ErrorGettingUser, err)
 		os.Exit(1)
 	}
 
-	tomlFile := filepath.Join(usr.HomeDir, ".goto.toml")
+	return filepath.Join(usr.HomeDir, ".goto.toml")
+}
 
-	// Initialize filteredArgs to store remaining arguments after processing options
-	var filteredArgs []string
-
-	// Handle command line arguments
-	if len(os.Args) > 1 {
-		// Check for config, history file, and interactive mode options first
-		args := os.Args[1:]
-		filteredArgs = []string{}
-
-		for i := 0; i < len(args); i++ {
-			arg := args[i]
-
-			if arg == "--config-file" && i+1 < len(args) {
-				customConfigFile = args[i+1]
-				i++ // Skip the next argument as it's the file path
-			} else if arg == "--history-file" && i+1 < len(args) {
-				customHistoryFile = args[i+1]
-				i++ // Skip the next argument as it's the file path
-			} else if arg == "-c" {
-				interactiveMode = "cursor"
-			} else if arg == "-l" {
-				interactiveMode = "label"
-			} else {
-				filteredArgs = append(filteredArgs, arg)
-			}
-		}
-
-		// Use custom config file if specified
-		if customConfigFile != "" {
-			tomlFile = customConfigFile
-		}
-	}
-
+// loadAndValidateConfig loads and validates configuration, returns entries and shortcut map
+func loadAndValidateConfig(tomlFile, customHistoryFile string) ([]Entry, map[string]int) {
 	// Create default config if it doesn't exist
 	if _, err := os.Stat(tomlFile); os.IsNotExist(err) {
 		createDefaultConfig(tomlFile)
@@ -116,97 +152,99 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Handle remaining command line arguments
-	if len(os.Args) > 1 && len(filteredArgs) > 0 {
-		// Use the already filtered args from the first processing stage
-		args := filteredArgs
+	return entries, shortcutMap
+}
 
-		arg := args[0]
+// handleCommandLineArguments processes command line arguments
+func handleCommandLineArguments(filteredArgs []string, entries []Entry, shortcutMap map[string]int, tomlFile, customHistoryFile string) {
+	arg := filteredArgs[0]
 
-		// Handle help option
-		if arg == "-h" || arg == "--help" || arg == "help" {
-			showHelp()
+	// Handle help option
+	if arg == "-h" || arg == "--help" || arg == "help" {
+		showHelp()
+		os.Exit(0)
+	}
+
+	// Handle version option
+	if arg == "-v" || arg == "--version" || arg == "version" {
+		showVersion()
+		os.Exit(0)
+	}
+
+	// Handle completion option for bash/zsh tab completion
+	if arg == "--complete" {
+		showCompletions(entries)
+		os.Exit(0)
+	}
+
+	// Handle history option
+	if arg == "--history" {
+		ShowHistory(tomlFile, customHistoryFile)
+		os.Exit(0)
+	}
+
+	// Handle list option
+	if arg == "--list" {
+		showList(entries)
+		os.Exit(0)
+	}
+
+	// Handle list-label option
+	if arg == "--list-label" {
+		showListLabel(entries)
+		os.Exit(0)
+	}
+
+	// Handle add option
+	if arg == "--add" {
+		success := addCurrentPathToConfig(tomlFile)
+		if success {
 			os.Exit(0)
-		}
-
-		// Handle version option
-		if arg == "-v" || arg == "--version" || arg == "version" {
-			showVersion()
-			os.Exit(0)
-		}
-
-		// Handle completion option for bash/zsh tab completion
-		if arg == "--complete" {
-			showCompletions(entries)
-			os.Exit(0)
-		}
-
-		// Handle history option
-		if arg == "--history" {
-			ShowHistory(customConfigFile, customHistoryFile)
-			os.Exit(0)
-		}
-
-		// Handle list option
-		if arg == "--list" {
-			showList(entries)
-			os.Exit(0)
-		}
-
-		// Handle list-label option
-		if arg == "--list-label" {
-			showListLabel(entries)
-			os.Exit(0)
-		}
-
-		// Handle add option
-		if arg == "--add" {
-			success := addCurrentPathToConfig(tomlFile)
-			if success {
-				os.Exit(0)
-			} else {
-				os.Exit(1)
-			}
 		} else {
-			// Find destination by argument
-			targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
-
-			if targetDir == "" {
-				fmt.Printf(messages.DestinationNotFound, arg)
-				fmt.Println("\n📋 Available destinations:")
-				for _, entry := range entries {
-					shortcutStr := ""
-					if entry.Shortcut != "" {
-						shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
-					}
-					expandedPath := expandPath(entry.Path)
-					fmt.Printf("  • %s%s → %s\n", entry.Label, shortcutStr, expandedPath)
-				}
-				os.Exit(1)
-			}
-
-			fmt.Printf("%s %s\n", messages.FoundDestination, label)
-			success := openNewShell(targetDir, command, label)
-			if success {
-				// Update history
-				if label != "" {
-					err := UpdateHistory(tomlFile, label, customHistoryFile)
-					if err != nil {
-						fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
-					}
-				}
-				os.Exit(0)
-			} else {
-				os.Exit(1)
-			}
+			os.Exit(1)
 		}
 	}
 
-	// If no arguments or only option flags were provided, go to interactive mode
-	goto interactive_mode
+	// Find destination by argument
+	handleDestinationNavigation(arg, entries, shortcutMap, tomlFile, customHistoryFile)
+}
 
-interactive_mode:
-	// Interactive mode
+// handleDestinationNavigation handles navigation to a specific destination
+func handleDestinationNavigation(arg string, entries []Entry, shortcutMap map[string]int, tomlFile, customHistoryFile string) {
+	targetDir, command, label := findDestinationByArg(arg, entries, shortcutMap)
+
+	if targetDir == "" {
+		fmt.Printf(messages.DestinationNotFound, arg)
+		fmt.Println("\n📋 Available destinations:")
+		for _, entry := range entries {
+			shortcutStr := ""
+			if entry.Shortcut != "" {
+				shortcutStr = fmt.Sprintf(" (%s)", entry.Shortcut)
+			}
+			expandedPath := expandPath(entry.Path)
+			fmt.Printf("  • %s%s → %s\n", entry.Label, shortcutStr, expandedPath)
+		}
+		os.Exit(1)
+	}
+
+	fmt.Printf("%s %s\n", messages.FoundDestination, label)
+	success := openNewShell(targetDir, command, label)
+	if success {
+		// Update history
+		if label != "" {
+			err := UpdateHistory(tomlFile, label, customHistoryFile)
+			if err != nil {
+				fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
+			}
+		}
+		os.Exit(0)
+	} else {
+		os.Exit(1)
+	}
+}
+
+// runInteractiveMode runs the interactive mode
+func runInteractiveMode(entries []Entry, shortcutMap map[string]int, tomlFile, interactiveMode string) {
 	targetDir, command, label := getUserChoice(entries, shortcutMap, tomlFile, interactiveMode)
 
 	if targetDir == "ADD_CURRENT" {
@@ -222,13 +260,15 @@ interactive_mode:
 		fmt.Println(messages.NoDirectorySelected)
 		os.Exit(0)
 	}
+
 	// Update history
 	if label != "" {
-		err := UpdateHistory(tomlFile, label, customHistoryFile)
+		err := UpdateHistory(tomlFile, label, "")
 		if err != nil {
 			fmt.Printf("%s %v\n", messages.WarningFailedToUpdateHistory, err)
 		}
 	}
+
 	// Open the selected destination
 	success := openNewShell(targetDir, command, label)
 	if success {
@@ -288,11 +328,47 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string,
 func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 	// ターミナル横幅取得
 	termWidth := 80
-	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
+	termHeight := 24
+	if w, h, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
 		termWidth = w
+		termHeight = h
 	}
 
-	for i, entry := range entries {
+	// カーソルモードの場合、画面に収まる行数を計算
+	maxDisplayEntries := len(entries)
+	if cursorMode {
+		// ヘッダー(2行) + フッター(3行) + Exit(1行) + マージン(2行) = 8行を除く
+		availableLines := termHeight - 8
+		if availableLines < 3 {
+			availableLines = 3 // 最低3行は確保
+		}
+		if len(entries) > availableLines {
+			maxDisplayEntries = availableLines
+		}
+	}
+
+	displayStart := 0
+	displayEnd := maxDisplayEntries
+
+	// カーソルモードで選択項目が表示範囲外の場合、表示範囲を調整
+	if cursorMode && maxDisplayEntries < len(entries) {
+		if selectedIndex >= maxDisplayEntries {
+			// 選択項目が表示範囲の下にある場合
+			displayStart = selectedIndex - maxDisplayEntries + 1
+			if displayStart < 0 {
+				displayStart = 0
+			}
+			displayEnd = displayStart + maxDisplayEntries
+			if displayEnd > len(entries) {
+				displayEnd = len(entries)
+				displayStart = displayEnd - maxDisplayEntries
+			}
+		}
+	}
+
+	// エントリーの表示
+	for i := displayStart; i < displayEnd; i++ {
+		entry := entries[i]
 		expandedPath := expandPath(entry.Path)
 		shortcutStr := ""
 		if entry.Shortcut != "" {
@@ -304,11 +380,20 @@ func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 		if i+1 < 10 {
 			numStr = fmt.Sprintf("%d", i+1)
 		} else {
-			numStr = "_"
+			numStr = " "
 		}
 
 		// フォーマット: 数字 ラベル (ショートカットキー) → パス
-		prefix := fmt.Sprintf("%s %s%s → ", numStr, entry.Label, shortcutStr)
+		// ラベルを20文字に左寄せ
+		labelWithShortcut := entry.Label + shortcutStr
+		formattedLabel := fmt.Sprintf("%-20s", labelWithShortcut)
+		if len([]rune(labelWithShortcut)) > 20 {
+			// 20文字を超える場合は切り詰める
+			runes := []rune(labelWithShortcut)
+			formattedLabel = string(runes[:20])
+		}
+
+		prefix := fmt.Sprintf("%s %s → ", numStr, formattedLabel)
 		maxPathLen := termWidth - len([]rune(prefix))
 		pathStr := expandedPath
 		if maxPathLen > 8 && len([]rune(expandedPath)) > maxPathLen {
@@ -323,8 +408,14 @@ func displayEntries(entries []Entry, selectedIndex int, cursorMode bool) {
 		}
 	}
 
-	// [0] Exit オプションを追加
-	exitPrefix := "0. Exit"
+	// 省略表示の情報
+	if cursorMode && maxDisplayEntries < len(entries) {
+		omittedCount := len(entries) - maxDisplayEntries
+		fmt.Printf("... (%d more entries hidden)\n", omittedCount)
+	}
+
+	// print "0 Exit"
+	exitPrefix := "0 Exit"
 	exitIndex := len(entries) // Exitは最後のインデックス
 	if cursorMode && selectedIndex == exitIndex {
 		fmt.Printf("\033[47;30m%s\033[0m\n", exitPrefix) // 白背景でハイライト
@@ -379,13 +470,7 @@ func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFi
 	inputBuffer := "" // 複数文字入力用のバッファ
 
 	// 初期表示
-	fmt.Print("\033[2J\033[H") // 画面をクリアしてカーソルを左上に移動
-	PrintWhiteBackgroundLine(messages.AvailableDestinations)
-	fmt.Println()
-	displayEntries(entries, selectedIndex, true)
-	fmt.Printf("%s\n", messages.InteractiveHelp)
-	fmt.Printf("%s\n", messages.CursorModeHint)
-
+	redrawCursorMode(entries, selectedIndex)
 	for {
 		// Raw modeで入力を読み取り
 		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -393,7 +478,6 @@ func getUserChoiceCursorMode(entries []Entry, shortcutMap map[string]int, tomlFi
 			fmt.Printf("Error entering raw mode: %v\n", err)
 			return "", "", ""
 		}
-
 		buffer := make([]byte, 4)
 		n, err := os.Stdin.Read(buffer)
 		term.Restore(int(os.Stdin.Fd()), oldState)
@@ -517,8 +601,10 @@ func redrawCursorMode(entries []Entry, selectedIndex int) {
 	// エントリーリストを再表示
 	displayEntries(entries, selectedIndex, true)
 
+	// 横線を表示
+	PrintHorzontalLine("-")
 	// フッターメッセージを更新
-	fmt.Printf("%s\n", messages.InteractiveHelp)
+	fmt.Println(messages.InteractiveHelp)
 	fmt.Printf("%s\n", messages.CursorModeHint)
 }
 
@@ -528,8 +614,10 @@ func getUserChoiceCmdMode(entries []Entry, shortcutMap map[string]int, tomlFile 
 		// 画面をクリア
 		fmt.Print("\033[2J\033[H")
 		PrintWhiteBackgroundLine(messages.AvailableDestinations)
+		fmt.Println()
 		displayEntries(entries, 0, false)
-		fmt.Printf("%s\n", messages.InteractiveHelp)
+		PrintWhiteBackgroundLine(messages.InteractiveHelp)
+		fmt.Println()
 		fmt.Printf("%s\n", messages.EnterChoice)
 		fmt.Printf("%s\n", messages.BackToCursorModeHint)
 		fmt.Printf("%s ", messages.EnterChoicePrompt)
@@ -605,6 +693,7 @@ func openNewShell(targetDir, command, label string) bool {
 
 	openShellMessage := fmt.Sprintf("%s %s", messages.OpeningShell, targetDir)
 	PrintWhiteBackgroundLine(openShellMessage)
+	fmt.Println()
 	if label != "" {
 		fmt.Printf("%s %s\n", messages.Destination, label)
 	}

@@ -138,7 +138,7 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "😊 どこに移動しますか？",
-			EnterChoice:           "[番号]、(キー)、ラベル、または[+]を入力してください:",
+			EnterChoice:           "番号、キー、ラベル、または「+」を入力してください:",
 			EnterChoicePrompt:     ">>>",
 
 			// Navigation messages
@@ -207,9 +207,9 @@ func getMessages(lang Language) Messages {
 			ShowInteractiveMenuExample:  "# インタラクティブメニューを表示",
 
 			// Interactive cursor mode messages
-			CursorModeHint:       "💡 ↑↓/j/kキーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに切り替え",
-			BackToCursorModeHint: "💡 ヒント: Enterキーのみでカーソル移動モードに戻る",
-			CursorNavigationHint: "💡 ↑↓キーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る",
+			CursorModeHint:       "💡 ↑↓jkキーで移動、Enterで決定、数字(キー)で直接選択、ESCで通常モードに。",
+			BackToCursorModeHint: "💡 [Enter]でカーソル移動モードに戻る",
+			CursorNavigationHint: "💡 ↑↓jkキーで移動、Enterで決定、数字(キー)で直接選択、ESCで通常モードに。",
 
 			// Interactive help message
 			InteractiveHelp: "📋 [?]でヘルプ、[0]で終了、[+]で現在のディレクトリを追加",

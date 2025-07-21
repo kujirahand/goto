@@ -1,4 +1,22 @@
-# Release v1.1.1
+# Release v1.1.2
+
+## 🚀 Enhancements
+
+- **Improved Build Process**: The `Makefile` has been enhanced to automate the creation of ZIP archives for releases, streamlining the packaging process.
+- **Added Quick Start Guide**: A "Quick Start" section has been added to the `README.md` to help new users get started more easily.
+
+## 🐛 Bug Fixes
+
+- **Fixed Cursor Mode Bug**: Fixed a bug in interactive cursor mode where input was not handled correctly.
+
+## 🧹 Maintenance
+
+- **Removed Binary Artifacts**: Pre-compiled binary files have been removed from the Git repository to reduce its size. They are now provided exclusively through release assets.
+- **Updated Documentation**: All `README-*.md` files have been updated to reflect the latest changes.
+
+---
+
+## Release v1.1.1
 
 ## 🔧 Code Improvements & Bug Fixes
 
