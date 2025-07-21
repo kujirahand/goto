@@ -1,3 +1,24 @@
+# Release v1.1.1
+
+## 🔧 Code Improvements & Bug Fixes
+
+### Code Structure Refactoring
+- **Extracted utility functions**: Moved URL and file utility functions to dedicated `utils.go` file
+- **Improved function naming**: Standardized function names (e.g., `showHistory` → `ShowHistory`)
+- **Better code organization**: Cleaner separation of concerns across modules
+
+### History Management Fixes
+- **Fixed history update timing**: History now updates before opening shell instead of after
+- **Improved display formatting**: Changed item numbering from "-" to "." for items 10 and above
+- **Enhanced test coverage**: Added comprehensive tests for history functionality
+
+### Development & Testing
+- **Enhanced test infrastructure**: Improved test helper with better resource management
+- **Added test automation**: New `test_all.sh` script for running all tests
+- **Build system updates**: Added `utils.go` to Makefile build sources
+
+---
+
 # Release v1.1.0
 
 ## 🚀 What's New
