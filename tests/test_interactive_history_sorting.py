@@ -1,25 +1,23 @@
-#!/usr/bin/env python3
 """
 Test for interactive mode history sorting.
 This test verifies that directories are sorted by most recently used in interactive mode.
 """
 
-import os
-import tempfile
-import subprocess
-import json
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
-def main():
-    # Create temporary files
-    temp_dir = tempfile.mkdtemp(prefix="goto_test_")
-    config_file = os.path.join(temp_dir, "test_config.toml")
-    history_file = os.path.join(temp_dir, "test_history.json")
+# Add parent directory to path to import conftest
+sys.path.insert(0, str(Path(__file__).parent))
 
-    try:
+
+class TestInteractiveHistorySorting:
+    """Test interactive mode history sorting functionality."""
+
+    def test_interactive_history_sorting(self, goto_helper):
+        """Test that interactive mode sorts entries by most recently used."""
         # Create config with multiple destinations
-        with open(config_file, 'w') as f:
-            f.write('''[alpha]
+        config_content = '''[alpha]
 path = "~/alpha"
 shortcut = "a"
 
@@ -34,94 +32,90 @@ shortcut = "g"
 [delta]
 path = "~/delta"
 shortcut = "d"
-''')
+'''
+        goto_helper.create_config(config_content)
 
-        # Create history with different timestamps
-        # Expected order: beta (most recent), delta, alpha, gamma (oldest)
+        # Create history with different timestamps (beta most recent, gamma oldest)
         base_time = datetime.now()
-        history_data = {
-            "entries": [
-                {
-                    "label": "alpha",
-                    "last_used": (base_time - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
-                },
-                {
-                    "label": "beta",
-                    "last_used": (base_time - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
-                },
-                {
-                    "label": "gamma",
-                    "last_used": (base_time - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Oldest
-                },
-                {
-                    "label": "delta",
-                    "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-                }
-            ]
-        }
+        history_entries = [
+            {
+                "label": "alpha",
+                "last_used": (base_time - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            },
+            {
+                "label": "beta",
+                "last_used": (base_time - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
+            },
+            {
+                "label": "gamma",
+                "last_used": (base_time - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Oldest
+            },
+            {
+                "label": "delta",
+                "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
+        ]
+        goto_helper.create_history(history_entries)
 
-        with open(history_file, 'w') as f:
-            json.dump(history_data, f, indent=2)
+        # Test interactive mode (simulate pressing 'q' to quit)
+        _, stdout, _ = goto_helper.run_goto_interactive([], input_text="q\n")
 
-        print("Created test config and history files")
-        print(f"Config file: {config_file}")
-        print(f"History file: {history_file}")
+        # Extract the order from output
+        lines = stdout.strip().split('\n')
         
-        print("\nHistory data:")
-        with open(history_file, 'r') as f:
-            print(f.read())
+        # Find lines that start with numbers (1., 2., etc.) - handle ANSI escape sequences
+        order = []
+        for line in lines:
+            # Remove ANSI escape sequences
+            import re
+            clean_line = re.sub(r'\x1b\[[0-9;]*m', '', line)
+            
+            if clean_line.strip().startswith(('1.', '2.', '3.', '4.')):
+                # Extract label from format "1. label (shortcut) → path" or "1. label → path"
+                parts = clean_line.split(' ')
+                if len(parts) >= 2:
+                    label_part = parts[1]
+                    # Remove shortcut part if exists
+                    if '(' in label_part:
+                        label = label_part.split('(')[0].strip()
+                    else:
+                        label = label_part.strip()
+                    order.append(label)
 
-        # Test interactive mode output by sending "0" (exit) as input
-        goto_binary = "/Users/kujirahand/repos/goto/go/goto"
-        cmd = [goto_binary, "--config", config_file, "--history-file", history_file, "-l"]
-
-        print(f"\nRunning: {' '.join(cmd)}")
-        print("Sending '0' to exit interactive mode...")
+        # Expected order: beta (most recent), delta, alpha, gamma (oldest)
+        expected_order = ["beta", "delta", "alpha", "gamma"]
         
-        # Send "0" as input to exit the interactive mode
-        result = subprocess.run(cmd, input="0\n", capture_output=True, text=True)
+        assert len(order) >= 4, f"Should have at least 4 entries, got {len(order)}: {order}"
+        assert order[:4] == expected_order, f"Expected order {expected_order}, got {order[:4]}"
 
-        print(f"Return code: {result.returncode}")
-        print(f"STDOUT:\n{result.stdout}")
-        if result.stderr:
-            print(f"STDERR:\n{result.stderr}")
+    def test_cursor_mode_history_sorting(self, goto_helper):
+        """Test that cursor mode also respects history sorting."""
+        # Create config with two destinations
+        config_content = '''[first]
+path = "~/first"
 
-        # Analyze the output to check order
-        lines = result.stdout.split('\n')
-        entry_lines = [line for line in lines if line.strip() and (line.startswith('1.') or line.startswith('2.') or line.startswith('3.') or line.startswith('4.'))]
-        
-        print("\nExtracted entry lines:")
-        for line in entry_lines:
-            print(f"  {line}")
+[second]
+path = "~/second"
+'''
+        goto_helper.create_config(config_content)
 
-        # Expected order based on history: beta, delta, alpha, gamma
-        expected_labels = ["beta", "delta", "alpha", "gamma"]
-        
-        print(f"\nExpected order: {expected_labels}")
-        
-        actual_order = []
-        for line in entry_lines:
-            for label in expected_labels:
-                if label in line:
-                    actual_order.append(label)
-                    break
-        
-        print(f"Actual order: {actual_order}")
-        
-        if actual_order == expected_labels:
-            print("✅ SUCCESS: Entries are correctly sorted by history (most recent first)")
-            return True
-        else:
-            print("❌ FAILURE: Entries are not correctly sorted by history")
-            print(f"Expected: {expected_labels}")
-            print(f"Actual: {actual_order}")
-            return False
+        # Create history with second being more recent
+        base_time = datetime.now()
+        history_entries = [
+            {
+                "label": "first",
+                "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            },
+            {
+                "label": "second",
+                "last_used": (base_time - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
+            }
+        ]
+        goto_helper.create_history(history_entries)
 
-    finally:
-        # Cleanup
-        import shutil
-        shutil.rmtree(temp_dir)
+        # Test with cursor mode
+        _, stdout, _ = goto_helper.run_goto_interactive(["-c"], input_text="q\n")
 
-if __name__ == "__main__":
-    success = main()
-    exit(0 if success else 1)
+        # Should show second first (most recent)
+        assert "second" in stdout, "Second should appear in cursor mode"
+        assert "first" in stdout, "First should appear in cursor mode"

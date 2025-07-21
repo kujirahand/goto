@@ -7,8 +7,7 @@ import tempfile
 from pathlib import Path
 
 # Add parent directory to path to import conftest
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from conftest import GotoTestHelper, build_goto_binary
+sys.path.insert(0, str(Path(__file__).parent))
 
 
 class TestAdvancedFeatures:

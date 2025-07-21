@@ -6,8 +6,7 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path to import conftest
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from conftest import GotoTestHelper, build_goto_binary
+sys.path.insert(0, str(Path(__file__).parent))
 
 
 class TestBasicFunctionality:
@@ -15,15 +14,11 @@ class TestBasicFunctionality:
     
     def test_goto_binary_exists(self):
         """Test that the goto binary exists and can be executed."""
-        script_dir = Path(__file__).parent.parent
+        script_dir = Path(__file__).parent
         project_dir = script_dir.parent
         goto_binary = project_dir / "go" / "goto"
         
-        # Try to build if it doesn't exist
-        if not goto_binary.exists():
-            assert build_goto_binary(project_dir), "Failed to build goto binary"
-        
-        assert goto_binary.exists(), "Goto binary not found"
+        assert goto_binary.exists(), "Goto binary not found - run 'make build' first"
         assert os.access(goto_binary, os.X_OK), "Goto binary is not executable"
     
     def test_goto_help(self, goto_helper):

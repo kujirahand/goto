@@ -1,17 +1,21 @@
-import os
-import tempfile
-import subprocess
-import json
+"""
+Test history sorting functionality of goto command.
+"""
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
-# Create temporary files
-temp_dir = tempfile.mkdtemp(prefix="goto_test_")
-config_file = os.path.join(temp_dir, "test_config.toml")
-history_file = os.path.join(temp_dir, "test_history.json")
+# Add parent directory to path to import conftest
+sys.path.insert(0, str(Path(__file__).parent))
 
-# Create config with multiple destinations
-with open(config_file, 'w') as f:
-    f.write('''
+
+class TestHistorySorting:
+    """Test history-based sorting functionality."""
+
+    def test_history_display_sorting(self, goto_helper):
+        """Test that history command displays entries in correct order."""
+        # Create config with multiple destinations
+        config_content = '''
 [home]
 path = "~/"
 
@@ -23,49 +27,93 @@ path = "~/Documents"
 
 [downloads]
 path = "~/Downloads"
-''')
+'''
+        goto_helper.create_config(config_content)
 
-# Create history with different timestamps
-base_time = datetime.now()
-history_data = {
-    "entries": [
-        {
-            "label": "home",
-            "last_used": (base_time - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        },
-        {
-            "label": "projects",
-            "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
-        },
-        {
-            "label": "documents",
-            "last_used": (base_time - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Oldest
-        },
-        {
-            "label": "downloads",
-            "last_used": (base_time - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
-    ]
-}
+        # Create history with different timestamps
+        base_time = datetime.now()
+        history_entries = [
+            {
+                "label": "home",
+                "last_used": (base_time - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            },
+            {
+                "label": "projects",
+                "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
+            },
+            {
+                "label": "documents",
+                "last_used": (base_time - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Oldest
+            },
+            {
+                "label": "downloads",
+                "last_used": (base_time - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
+        ]
+        goto_helper.create_history(history_entries)
 
-with open(history_file, 'w') as f:
-    json.dump(history_data, f, indent=2)
+        # Test goto command with history flag
+        returncode, stdout, stderr = goto_helper.run_goto(["--history"])
 
-print("History content:")
-with open(history_file, 'r') as f:
-    print(f.read())
+        # Verify the command succeeded
+        assert returncode == 0, f"Command failed with stderr: {stderr}"
+        
+        # Verify that projects (most recent) appears first
+        lines = stdout.strip().split('\n')
+        assert any("projects" in line and "1." in line for line in lines), "Projects should be listed as #1"
+        assert any("downloads" in line and "2." in line for line in lines), "Downloads should be listed as #2"
+        assert any("home" in line and "3." in line for line in lines), "Home should be listed as #3"
+        assert any("documents" in line and "4." in line for line in lines), "Documents should be listed as #4"
 
-# Test goto command
-goto_binary = "/Users/kujirahand/repos/goto/go/goto"
-cmd = [goto_binary, "--config", config_file, "--history-file", history_file, "--history"]
+    def test_interactive_mode_sorting(self, goto_helper):
+        """Test that interactive mode displays entries in history order."""
+        # Create config with multiple destinations
+        config_content = '''
+[home]
+path = "~/"
 
-print(f"\nRunning: {' '.join(cmd)}")
-result = subprocess.run(cmd, capture_output=True, text=True)
+[projects]
+path = "~/Projects"
 
-print(f"Return code: {result.returncode}")
-print(f"STDOUT:\n{result.stdout}")
-print(f"STDERR:\n{result.stderr}")
+[documents]
+path = "~/Documents"
 
-# Cleanup
-import shutil
-shutil.rmtree(temp_dir)
+[downloads]
+path = "~/Downloads"
+'''
+        goto_helper.create_config(config_content)
+
+        # Create history with different timestamps
+        base_time = datetime.now()
+        history_entries = [
+            {
+                "label": "home",
+                "last_used": (base_time - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            },
+            {
+                "label": "projects",
+                "last_used": (base_time - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Most recent
+            },
+            {
+                "label": "documents",
+                "last_used": (base_time - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")  # Oldest
+            },
+            {
+                "label": "downloads",
+                "last_used": (base_time - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
+        ]
+        goto_helper.create_history(history_entries)
+
+        # Test goto command in interactive mode (simulate pressing 'q' to quit)
+        _, stdout, _ = goto_helper.run_goto_interactive([], input_text="q\n")
+
+        # Verify that projects (most recent) appears as option 1
+        lines = stdout.strip().split('\n')
+        project_line = None
+        for line in lines:
+            if "1." in line and "projects" in line:
+                project_line = line
+                break
+        
+        assert project_line is not None, f"Projects should be option 1. Stdout: {stdout}"
