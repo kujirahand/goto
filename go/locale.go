@@ -20,7 +20,6 @@ const (
 type Messages struct {
 	// Interactive mode messages
 	AvailableDestinations string
-	AddCurrentDirectory   string
 	EnterChoice           string
 	EnterChoicePrompt     string
 
@@ -94,6 +93,9 @@ type Messages struct {
 	BackToCursorModeHint string
 	CursorNavigationHint string
 
+	// Interactive help message
+	InteractiveHelp string
+
 	// Other messages
 	NoDirectorySelected  string
 	CreatedDefaultConfig string
@@ -136,7 +138,6 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "😊 どこに移動しますか？",
-			AddCurrentDirectory:   "🌱 [+] 現在のディレクトリを追加",
 			EnterChoice:           "[番号]、(キー)、ラベル、または[+]を入力してください:",
 			EnterChoicePrompt:     ">>>",
 
@@ -210,6 +211,9 @@ func getMessages(lang Language) Messages {
 			BackToCursorModeHint: "💡 ヒント: Enterキーのみでカーソル移動モードに戻る",
 			CursorNavigationHint: "💡 ↑↓キーで移動、Enterで決定、数字・ショートカットで直接選択、ESCで通常モードに戻る",
 
+			// Interactive help message
+			InteractiveHelp: "📋 [?]でヘルプ、[0]で終了、[+]で現在のディレクトリを追加",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  ディレクトリが選択されていないか、操作がキャンセルされました。",
 			CreatedDefaultConfig: "デフォルト設定ファイルを作成しました:",
@@ -218,7 +222,6 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 可用目录:",
-			AddCurrentDirectory:   "🌱 [+] 添加当前目录",
 			EnterChoice:           "请输入编号、快捷键、标签名称或 [+] 添加当前目录:",
 			EnterChoicePrompt:     "输入编号、快捷键、标签名称或 [+]:",
 
@@ -292,6 +295,9 @@ func getMessages(lang Language) Messages {
 			BackToCursorModeHint: "💡 提示: 只按Enter键返回光标移动模式",
 			CursorNavigationHint: "💡 用↑↓键移动，Enter确认，数字・快捷键直接选择，ESC切换到普通模式",
 
+			// Interactive help message
+			InteractiveHelp: "📋 [?]显示帮助，[0]退出，[+]添加当前目录",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  未选择目录或操作已取消。",
 			CreatedDefaultConfig: "已创建默认配置文件:",
@@ -300,7 +306,6 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 사용 가능한 디렉토리:",
-			AddCurrentDirectory:   "🌱 [+] 현재 디렉토리 추가",
 			EnterChoice:           "번호, 단축키, 라벨명 또는 [+]를 입력하세요:",
 			EnterChoicePrompt:     "번호, 단축키, 라벨명 또는 [+] 입력:",
 
@@ -374,6 +379,9 @@ func getMessages(lang Language) Messages {
 			BackToCursorModeHint: "💡 팁: Enter키만으로 커서 이동 모드로 돌아가기",
 			CursorNavigationHint: "💡 ↑↓키로 이동, Enter로 결정, 숫자・단축키로 직접 선택, ESC로 일반 모드 전환",
 
+			// Interactive help message
+			InteractiveHelp: "📋 [?]로 도움말, [0]으로 종료, [+]로 현재 디렉토리 추가",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  디렉토리가 선택되지 않았거나 작업이 취소되었습니다.",
 			CreatedDefaultConfig: "기본 설정 파일을 생성했습니다:",
@@ -382,7 +390,6 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 Destinos disponibles:",
-			AddCurrentDirectory:   "🌱 [+] Agregar directorio actual",
 			EnterChoice:           "Ingrese número, tecla de acceso rápido, nombre de etiqueta o [+]:",
 			EnterChoicePrompt:     "Destino:",
 
@@ -456,6 +463,9 @@ func getMessages(lang Language) Messages {
 			BackToCursorModeHint: "💡 Consejo: Solo presiona Enter para volver al modo de movimiento del cursor",
 			CursorNavigationHint: "💡 Mover con ↑↓, Enter para decidir, números・accesos rápidos para selección directa, ESC para modo normal",
 
+			// Interactive help message
+			InteractiveHelp: "📋 [?] para ayuda, [0] para salir, [+] para agregar directorio actual",
+
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No se seleccionó directorio o la operación fue cancelada.",
 			CreatedDefaultConfig: "Archivo de configuración por defecto creado:",
@@ -464,7 +474,6 @@ func getMessages(lang Language) Messages {
 		return Messages{
 			// Interactive mode messages
 			AvailableDestinations: "👉 Available destinations:",
-			AddCurrentDirectory:   "🌱 [+] Add current directory",
 			EnterChoice:           "Please enter the number, shortcut key, label name, or [+]:",
 			EnterChoicePrompt:     "Enter choice:",
 
@@ -537,6 +546,9 @@ func getMessages(lang Language) Messages {
 			CursorModeHint:       "💡 Move with ↑↓/j/k keys, Enter to decide, numbers・shortcuts for direct selection, ESC to switch to normal mode",
 			BackToCursorModeHint: "💡 Hint: Press Enter only to return to cursor movement mode",
 			CursorNavigationHint: "💡 Move with ↑↓ keys, Enter to decide, numbers・shortcuts for direct selection, ESC to switch to normal mode",
+
+			// Interactive help message
+			InteractiveHelp: "📋 Press [?] for help, [0] to exit, [+] to add current dir",
 
 			// Other messages
 			NoDirectorySelected:  "ℹ️  No directory selected or operation cancelled.",

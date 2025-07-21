@@ -292,16 +292,14 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 
 	// 初期表示（カーソルモードで開始）
 	displayEntries(selectedIndex, true)
-	fmt.Printf("%s\n", messages.AddCurrentDirectory)
-	fmt.Printf("📋 Press [?] for help, [0] to exit, [+] to add current dir\n")
+	fmt.Printf("%s\n", messages.InteractiveHelp)
 	fmt.Printf("%s\n", messages.CursorModeHint)
 
 	for {
 		if !cursorMode {
 			// 通常の入力モード表示
 			displayEntries(selectedIndex, false)
-			fmt.Printf("%s\n", messages.AddCurrentDirectory)
-			fmt.Printf("📋 Press [?] for help, 0. to exit\n")
+			fmt.Printf("%s\n", messages.InteractiveHelp)
 			fmt.Printf("%s\n", messages.EnterChoice)
 			fmt.Printf("%s\n", messages.BackToCursorModeHint)
 			fmt.Printf("%s ", messages.EnterChoicePrompt)
@@ -323,8 +321,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 				fmt.Print("\033[2J\033[H")
 				PrintWhiteBackgroundLine(messages.AvailableDestinations)
 				displayEntries(selectedIndex, true)
-				fmt.Printf("%s\n", messages.AddCurrentDirectory)
-				fmt.Printf("📋 Press [?] for help, 0. to exit\n")
+				fmt.Printf("%s\n", messages.InteractiveHelp)
 				fmt.Printf("%s\n", messages.CursorModeHint)
 				continue
 			}
@@ -425,8 +422,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 					fmt.Print("\033[2J\033[H")
 					PrintWhiteBackgroundLine(messages.AvailableDestinations)
 					displayEntries(selectedIndex, true)
-					fmt.Printf("%s\n", messages.AddCurrentDirectory)
-					fmt.Printf("📋 Press [?] for help, 0. to exit\n")
+					fmt.Printf("%s\n", messages.InteractiveHelp)
 					fmt.Printf("%s\n", messages.CursorModeHint)
 					continue
 				case 'j': // j キーで下移動 (Vim風)
@@ -502,8 +498,7 @@ func getUserChoice(entries []Entry, shortcutMap map[string]int, tomlFile string)
 				// カーソルを最初の行に移動（Exitオプション分も含める）
 				fmt.Printf("\033[%dA", len(entries)+4)
 				displayEntries(selectedIndex, true)
-				fmt.Printf("%s\n", messages.AddCurrentDirectory)
-				fmt.Printf("📋 Press [?] for help, 0. to exit\n")
+				fmt.Printf("%s\n", messages.InteractiveHelp)
 				fmt.Printf("%s\n", messages.CursorNavigationHint)
 			}
 		}
