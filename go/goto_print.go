@@ -137,11 +137,23 @@ func showInteractiveHelp() {
 
 	// Try to find README file in various locations
 	var readmePath string
+	
+	// Get executable path to help locate README files
+	execPath, _ := os.Executable()
+	execDir := filepath.Dir(execPath)
+	
 	possiblePaths := []string{
 		readmeFile,                                         // Current directory
 		filepath.Join("..", readmeFile),                    // Parent directory
 		filepath.Join("..", "..", readmeFile),              // Two levels up
+		filepath.Join(execDir, readmeFile),                 // Same directory as executable
+		filepath.Join(execDir, "..", readmeFile),           // Parent directory of executable
+		filepath.Join(execDir, "..", "..", readmeFile),     // Two levels up from executable
 		filepath.Join("/usr/local/share/goto", readmeFile), // System installation
+		// Add absolute paths for common development locations
+		filepath.Join("/Users/kujirahand/repos/goto", readmeFile),
+		"/Users/kujirahand/repos/goto/README.md",           // Fallback to English README
+		"/Users/kujirahand/repos/goto/README-ja.md",        // Fallback to Japanese README
 	}
 
 	for _, path := range possiblePaths {
@@ -149,6 +161,26 @@ func showInteractiveHelp() {
 			readmePath = path
 			break
 		}
+	}
+
+	// If no README found, show debug information
+	if readmePath == "" {
+		fmt.Printf("\n❌ README file not found. Searched paths:\n")
+		for i, path := range possiblePaths {
+			if i < 5 { // Show first 5 paths to avoid too much output
+				fmt.Printf("  - %s\n", path)
+			}
+		}
+		fmt.Printf("  ... and %d more paths\n", len(possiblePaths)-5)
+		fmt.Printf("📂 Current working directory: %s\n", func() string {
+			if wd, err := os.Getwd(); err == nil {
+				return wd
+			}
+			return "unknown"
+		}())
+		fmt.Printf("📂 Executable path: %s\n", execPath)
+		showBasicHelp()
+		return
 	}
 
 	// Check if less command is available
